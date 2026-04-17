@@ -10,7 +10,6 @@ function Home() {
     <section id="center">
       <h1>Brasília Virtual</h1>
       <div className="hero">
-        <img src={viteLogo} className="vite" alt="Vite logo" />
       </div>
       
       <div className="card">
