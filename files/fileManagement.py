@@ -1,5 +1,5 @@
 from fastapi import FastAPI, File, UploadFile
-from configDB import ConfigDB
+from database.configDB import ConfigDB
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.responses import StreamingResponse
 import os
@@ -47,3 +47,9 @@ class FileManagement:
         if not file_doc:
             return None
         return file_doc
+    
+    async def get_file_content(self, file_id:str):
+        self.file_doc = await self.db.fs.files.find_one({"_id": file_id})
+        if not self.file_doc:
+            return None
+        return self.file_doc["data"]
