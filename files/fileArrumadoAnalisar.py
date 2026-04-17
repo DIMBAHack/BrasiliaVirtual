@@ -11,10 +11,10 @@ class FileArrumadoAnalisar:
         if text is None:
             return {"error": "File not found"}
         else:
-            return text["data"].decode("utf-8")
+            return text["data"]
         
     def chuncking(self, text):
-        text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+        text_splitter = CharacterTextSplitter(chunk_size=3500, chunk_overlap=600)
         chunks = text_splitter.split_text(self.process_file(text))
         return chunks
     
@@ -29,7 +29,7 @@ class FileArrumadoAnalisar:
             encode_kwargs=encode_kwargs
         )
 
-        texts = self.chuncking(chunks)
+        texts = self.chunks
         embedding = hf.embed_documents(texts)
 
         return embedding
