@@ -1,11 +1,10 @@
 from fastapi import FastAPI, File, UploadFile
 from database.configDB import ConfigDB
-from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.responses import StreamingResponse
 import os
 
 app = FastAPI()
-client = ConfigDB.get_db()
+client = ConfigDB.get_db_file(self=ConfigDB())
 db = client["DMBAI"]
 
 class FileManagement:
@@ -53,3 +52,9 @@ class FileManagement:
         if not self.file_doc:
             return None
         return self.file_doc["data"]
+    
+    def files_list(self):
+        files = self.db.fs.files.find()
+        return files
+    
+print({FileManagement.files_list(self=FileManagement(db))})

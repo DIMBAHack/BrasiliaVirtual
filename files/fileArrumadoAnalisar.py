@@ -1,4 +1,4 @@
-from fileManagement import FileManagement
+from files.fileManagement import FileManagement
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 
@@ -41,7 +41,9 @@ class FileArrumadoAnalisar:
         enumerated_chunks = list(enumerate(self.chunks))
         return enumerated_chunks
     
-    
+    def arquivos_analise(self):
+        file_analise = {"file_info" : self.file_management.upload_file(), 
+                        "chunks": self.enumerate_chunks()}
     
 
         
