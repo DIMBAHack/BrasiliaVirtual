@@ -1,11 +1,12 @@
 from fastapi import FastAPI, File, UploadFile
+from configDB import ConfigDB
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi.responses import StreamingResponse
 import os
 
 app = FastAPI()
-client = AsyncIOMotorClient("mongodb://localhost:27017/")
-db = client["mydb"]
+client = ConfigDB.get_db()
+db = client["DMBAI"]
 
 class FileManagement:
     def __init__(self, db):
