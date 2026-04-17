@@ -1,0 +1,61 @@
+/* src/components/Analise/FilterBar.css */
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap; /* Garante que os botões quebrem linha em telas menores */
+}
+
+.filter-bar span {
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 600;
+  margin-right: 5px;
+  text-transform: uppercase;
+}
+
+/* Estilo Base dos Botões de Filtro */
+.filter-btn {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #555;
+  padding: 6px 14px;
+  border-radius: 10px; /* Bordas arredondadas seguindo o padrão do sistema */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efeito de Hover (Passar o mouse) */
+.filter-btn:hover {
+  background-color: #f8fbff;
+  border-color: #0062ff;
+  color: #0062ff;
+  transform: translateY(-1px);
+}
+
+/* Estado Ativo (Selecionado) */
+.filter-btn.active {
+  background-color: #eef6ff;
+  border-color: #0062ff;
+  color: #0062ff;
+  box-shadow: 0 4px 12px rgba(0, 98, 255, 0.1);
+}
+
+/* O pequeno quadradinho de cor ao lado do texto */
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Ajuste específico para o botão "Tudo" quando não tem cor definida */
+.filter-btn:first-of-type .dot {
+  border: 1px solid #ccc;
+}

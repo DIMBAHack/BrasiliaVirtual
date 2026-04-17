@@ -1,28 +1,50 @@
 // src/pages/Home.jsx
-import { useState } from 'react';
-import reactLogo from '../assets/react.svg'; // Note o ../ para subir uma pasta
-import viteLogo from '../assets/vite.svg';
+import { GoogleLogin } from '@react-oauth/google';
+import { useNavigate } from 'react-router-dom';
+import './home.css';
 
 function Home() {
-  const [count, setCount] = useState(0);
+  const navigate = useNavigate();
+
+  const handleSuccess = (credentialResponse) => {
+    console.log("Login realizado com sucesso! Token:", credentialResponse.credential);
+    // Integração pra API
+    navigate('/analise'); 
+  };
+
+  const handleError = () => {
+    alert('Erro ao tentar logar com o Google.');
+  };
 
   return (
-    <section id="center">
-      <h1>Brasília Virtual</h1>
-      <div className="hero">
-      </div>
-      
-      <div className="card">
-        <p>O front-end em React está pronto para conectar com o Python.</p>
-        <button onClick={() => setCount((count) => count + 1)}>
-          Testando Estado: {count}
-        </button>
-      </div>
+    <div className="home-overlay">
+      <div className="login-modal">
+        <header className="modal-header">   
+          <h1>Verificador de IA</h1>
+          <div className="divider"></div>
+        </header>
+        
+        <div className="modal-body">
+          <h3>Bem-vindo!</h3>
+          <p>Entre com sua conta Google para iniciar sua análise de documento.</p>
+          
+          <div className="google-btn-wrapper">
+            <GoogleLogin
+              onSuccess={handleSuccess}
+              onError={handleError}
+              shape="pill"
+              theme="outline"
+              size="large"
+              text="signin_with"
+              locale="pt-BR"
+            />
+          </div>
+        </div>
 
-      <p className="read-the-docs">
-        Edite <code>src/pages/Home.jsx</code> para começar a criar sua interface.
-      </p>
-    </section>
+        <footer className="modal-footer">
+        </footer>
+      </div>
+    </div>
   );
 }
 

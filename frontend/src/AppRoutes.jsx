@@ -1,14 +1,15 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom'; // Remova o BrowserRouter daqui
 import Home from './pages/home';
+import AnalysisPage from './pages/Analysis';
 
 function AppRoutes() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        {/* Futuramente: <Route path="/dashboard" element={<Dashboard />} /> */}
-      </Routes>
-    </BrowserRouter>
+    // Deixe apenas o Routes e as Route
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/analise" element={<AnalysisPage />} />
+      {/* Adicione outras aqui */}
+    </Routes>
   );
 }
 

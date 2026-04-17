@@ -1,0 +1,60 @@
+/* src/components/Analise/OccurrenceCard.css */
+
+.occurrence-card {
+  background-color: #ffffff;
+  border-radius: 16px; /* Bordas arredondadas seguindo a identidade */
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  position: relative;
+  border: 1px solid #f2f2f2;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  
+  /* A "mágica" da borda colorida na esquerda */
+  border-left: 6px solid var(--accent-color, #0062ff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+/* Efeito de destaque ao passar o mouse */
+.occurrence-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 6px 18px rgba(0, 98, 255, 0.08);
+  border-color: #e6f0ff;
+}
+
+.card-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+  color: var(--accent-color, #0062ff);
+}
+
+.card-trecho {
+  font-size: 0.9rem;
+  color: #333;
+  font-style: italic;
+  line-height: 1.4;
+  margin: 0 0 10px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Limita a 2 linhas para não quebrar o layout */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-detalhe {
+  font-size: 0.85rem;
+  color: #777;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Ícone sutil antes do detalhe (opcional) */
+.card-detalhe::before {
+  content: '•';
+  font-weight: bold;
+}

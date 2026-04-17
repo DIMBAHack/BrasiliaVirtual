@@ -1,0 +1,128 @@
+/* src/components/Sidebar/Sidebar.css */
+
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #f0f4f8;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 20px;
+  position: fixed; /* Fixa na esquerda */
+  left: 0;
+  top: 0;
+  box-sizing: border-box;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 50px;
+}
+
+.logo-icon {
+  background: #0062ff;
+  color: white;
+  padding: 8px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.sidebar-logo h2 {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+}
+
+.sidebar-logo h2 span {
+  color: #0062ff;
+}
+
+/* Links de Navegação */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.nav-item {
+  text-decoration: none;
+  color: #666;
+  padding: 12px 15px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background-color: #f8fbff;
+  color: #0062ff;
+}
+
+.nav-item.active {
+  background-color: #eef6ff;
+  color: #0062ff;
+}
+
+.nav-dot {
+  width: 6px;
+  height: 6px;
+  background-color: transparent;
+  border-radius: 50%;
+}
+
+.nav-item.active .nav-dot {
+  background-color: #0062ff;
+  box-shadow: 0 0 8px rgba(0, 98, 255, 0.5);
+}
+
+/* Rodapé com Usuário */
+.sidebar-footer {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  background: #eef6ff;
+  color: #0062ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+.logout-btn {
+  width: 100%;
+  background: none;
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s;
+  cursor: pointer; 
+  transition: 0.3s; 
+}
+
+.logout-btn:hover {
+  background: #fff5f5;
+  transform: scale(0.98);
+}
