@@ -44,6 +44,8 @@ class FileArrumadoAnalisar:
     def arquivos_analise(self):
         file_analise = {"file_info" : self.file_management.upload_file(), 
                         "chunks": self.enumerate_chunks()}
+        return file_analise
+    
     
 
         
