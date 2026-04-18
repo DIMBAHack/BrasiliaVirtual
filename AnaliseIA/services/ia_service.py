@@ -1,39 +1,41 @@
-#Sistema
+# ── Stdlib ────────────────────────────────────────────────────
 import os
 import re
 import math
 import time
+import base64
+import asyncio
 import difflib
 import logging
 import warnings
-
-#----------------------------------------------------------------
+from datetime import datetime
+from dataclasses import dataclass, field, asdict
 from typing import Optional
-from dataclasses import dataclass, field
-from dotenv import load_dotenv
 
-#Internos criados
+# ── Third-party ───────────────────────────────────────────────
+import httpx
+import nltk
+import numpy as np
+import requests
+import torch
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
+from duckduckgo_search import DDGS
+from langchain_core.messages import HumanMessage, SystemMessage
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# ── Internos ──────────────────────────────────────────────────
 from services.reader_service import ReaderService
 from services.agents_service import AgentsService
 from chunk_service import ChunkService
+from core.configDB import ConfigDB
+import uuid
 
-#----------------------------------------------------------------
-from langchain_core.messages import HumanMessage, SystemMessage
-import torch
-import numpy as np
-import requests
-from bs4 import BeautifulSoup
-from duckduckgo_search import DDGS
-
-# Parte de NLP
-import nltk
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-
+# ─────────────────────────────────────────────────────────────
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.WARNING)
 
-# Natural Language Toolkit (NLTK) para tokenização recursos necessários para análise
 try:
     nltk.data.find("tokenizers/punkt")
 except LookupError:
@@ -43,12 +45,13 @@ try:
 except LookupError:
     nltk.download("punkt_tab", quiet=True)
 
+
 @dataclass
 class TrechoAnalise:
     texto: str
-    classificacao: str          # "ia", "plagio", "fake_news", "autoral"
-    confianca: float            # 0.0 a 1.0
-    evidencias: list = field(default_factory=list)  # links de plágio ou fontes de IA
+    classificacao: str
+    confianca: float
+    evidencias: list = field(default_factory=list)
     detalhes: str = ""
 
 @dataclass
@@ -61,12 +64,12 @@ class ResultadoAnalise:
     perplexidade_media: float = 0.0
     similares_ia_pct: float = 0.0
 
+
 class GeradorPrompts:
     def __init__(self):
         self.llm = AgentsService.claude_agent
 
     def gerar(self, tema: str, num_prompts: int = 4) -> list[str]:
-
         system = (
             """Você é um especialista em comportamento de estudantes universitários.
             Gere prompts REALISTAS que um aluno brasileiro usaria em IAs para
@@ -90,6 +93,7 @@ class GeradorPrompts:
                 prompts.append(linha)
 
         return prompts[:num_prompts]
+
 
 class SimuladorRespostasIA:
     def __init__(self):
@@ -137,8 +141,9 @@ class SimuladorRespostasIA:
                 r = fn(prompt)
                 if r:
                     respostas.append(r)
-                time.sleep(0.3)  
+                time.sleep(0.3)
         return respostas
+
 
 class AnalisadorPerplexidade:
 
@@ -164,12 +169,10 @@ class AnalisadorPerplexidade:
     def calcular_perplexidade(self, texto: str) -> float:
         if not self.modelo_carregado or not self.model:
             return -1.0
-
         try:
             tokens = self.tokenizer.encode(texto[:2000], return_tensors="pt")
             if tokens.shape[1] < 10:
                 return -1.0
-
             with torch.no_grad():
                 outputs = self.model(tokens, labels=tokens)
                 loss = outputs.loss
@@ -190,21 +193,20 @@ class AnalisadorPerplexidade:
         else:
             return "provavel humano", 0.75
 
+
 class ComparadorSimilaridade:
 
     @staticmethod
     def similaridade_tfidf(trecho: str, referencias: list[str]) -> float:
-
         if not referencias:
             return 0.0
         try:
             corpus = [trecho] + referencias
             vec = TfidfVectorizer(
-                ngram_range=(1, 3),   
+                ngram_range=(1, 3),
                 min_df=1,
-                stop_words=None     
+                stop_words=None
             ).fit_transform(corpus)
-
             sims = cosine_similarity(vec[0:1], vec[1:])
             return float(sims.max())
         except Exception:
@@ -220,61 +222,132 @@ class ComparadorSimilaridade:
 
     @staticmethod
     def combinar(sim_tfidf: float, sim_seq: float) -> float:
-        """Combina as duas métricas com pesos."""
         return (sim_tfidf * 0.6) + (sim_seq * 0.4)
 
+
+
 class DetectorPlagio:
-#MUDAR PRA COPYLEAKS DEPOIS AQUI MATHEUS PLEASE 
+
     def __init__(self):
-        self.ddgs = DDGS()
+        self.email            = os.getenv("EMAIL_ADDRESS")
+        self.api_key          = os.getenv("API_KEY")
+        self.webhook_base_url = os.getenv("WEBHOOK_BASE_URL")
+
+        if not all([self.email, self.api_key, self.webhook_base_url]):
+            raise RuntimeError("Verifique o .env — faltam variáveis")
+
+    async def _login(self, client: httpx.AsyncClient) -> str:
+        r = await client.post(
+            "https://id.copyleaks.com/v3/account/login/api",
+            json={"email": self.email, "key": self.api_key}
+        )
+        r.raise_for_status()
+        return r.json()["access_token"]
+
+    async def _checar_creditos(self, client: httpx.AsyncClient, headers: dict) -> int:
+        r = await client.get(
+            "https://api.copyleaks.com/v3/scans/credits",
+            headers=headers
+        )
+        r.raise_for_status()
+        return r.json().get("Amount", 0)
+
+    async def verificar_plagio(self, scan_id: str, texto: str) -> dict:
+        async with httpx.AsyncClient() as client:
+
+            try:
+                token = await self._login(client)
+            except Exception as e:
+                logging.error(f"[plagio] Login falhou: {e}")
+                return {"scan_id": scan_id, "status": "erro", "detalhes": str(e)}
+
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type":  "application/json"
+            }
+
+            try:
+                saldo = await self._checar_creditos(client, headers)
+                logging.info(f"[plagio] Saldo: {saldo} crédito(s)")
+            except Exception as e:
+                logging.warning(f"[plagio] Créditos indisponíveis: {e}")
+                saldo = 1
+
+            if saldo <= 0:
+                return {"scan_id": scan_id, "status": "erro", "detalhes": "Sem créditos"}
+
+            try:
+                r = await client.put(
+                    f"https://api.copyleaks.com/v3/scans/submit/file/{scan_id}",
+                    headers=headers,
+                    json={
+                        "base64":   base64.b64encode(texto.encode("utf-8")).decode("utf-8"),
+                        "filename": f"{scan_id}.txt",
+                        "properties": {
+                            "sandbox": True,
+                            "webhooks": {
+                                "status": f"{self.webhook_base_url}/webhook/{{status}}/{scan_id}"
+                            }
+                        }
+                    }
+                )
+
+                if r.status_code == 400:
+                    logging.warning(f"[plagio] Chunk {scan_id} rejeitado: {r.text}")
+                    return {"scan_id": scan_id, "status": "erro", "detalhes": r.text}
+
+                r.raise_for_status()
+
+            except Exception as e:
+                logging.error(f"[plagio] Submit falhou: {e}")
+                return {"scan_id": scan_id, "status": "erro", "detalhes": str(e)}
+
+        return {"scan_id": scan_id, "status": "aguardando_webhook"}
 
     def verificar_trecho(self, trecho: str) -> list[dict]:
-        palavras = trecho.split()[:15]
-        query = " ".join(palavras)
-
-        fontes_encontradas = []
+        """
+        Chamado sincronamente por DMBAnalyzer.analisar().
+        Roda verificar_plagio em um event loop isolado e retorna
+        uma lista de fontes encontradas (vazia enquanto o webhook
+        não chegar — a confirmação real vem de forma assíncrona).
+        """
+        import uuid
+        scan_id = f"chunk_{uuid.uuid4().hex[:8]}"
         try:
-            resultados = list(self.ddgs.text(
-                f'"{query}"',   
-                max_results=3,
-                region="br-pt"
-            ))
-            for r in resultados:
-                sim = difflib.SequenceMatcher(
-                    None,
-                    trecho.lower()[:300],
-                    r.get("body", "").lower()[:300]
-                ).ratio()
-
-                if sim > 0.35:  
-                    fontes_encontradas.append({
-                        "url": r.get("href", ""),
-                        "titulo": r.get("title", ""),
-                        "trecho_fonte": r.get("body", "")[:200],
-                        "similaridade": round(sim * 100, 1)
-                    })
+            loop = asyncio.new_event_loop()
+            resultado = loop.run_until_complete(
+                self.verificar_plagio(scan_id, trecho)
+            )
+            loop.close()
         except Exception as e:
-            logging.warning(f"Busca web falhou: {e}")
+            logging.warning(f"[plagio] verificar_trecho falhou: {e}")
+            return []
 
-        return fontes_encontradas
+        # O Copyleaks é assíncrono por webhook — aqui apenas registramos
+        # o envio. O resultado real chega via /webhook/{status}/{scan_id}.
+        if resultado.get("status") == "aguardando_webhook":
+            return []  # Sem fontes ainda; webhook atualizará o banco
+        return []
 
+
+# ═══════════════════════════════════════════════════════════════
 
 class VerificadorFakeNews:
-        
+
     def __init__(self):
         self.client = AgentsService.claude_agent()
- 
+
     def verificar(self, trecho: str, tema: str) -> tuple[bool, str]:
         prompt = f"""Você é um verificador de fatos acadêmico rigoroso.
 Tema do trabalho: {tema}
- 
+
 Analise o trecho abaixo e determine:
 1. Há afirmações factualmente incorretas, inventadas ou sem base?
 2. Se sim, explique brevemente qual informação está errada e por quê.
- 
+
 Responda APENAS neste formato JSON:
 {{"fake": true/false, "explicacao": "texto curto ou vazio"}}
- 
+
 Trecho: {trecho[:500]}"""
 
         try:
@@ -294,12 +367,9 @@ Trecho: {trecho[:500]}"""
 
         return False, ""
 
-from datetime import datetime
-from dataclasses import asdict
-from core.configDB import ConfigDB
 
 class DMBAnalyzer:
-    THRESHOLD_IA = 0.75 #msm q 75% pra min de IA prob
+    THRESHOLD_IA = 0.75
 
     def __init__(self, callback_status=None):
         self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
@@ -326,7 +396,7 @@ class DMBAnalyzer:
             "documento_id": documento_id,
             "arquivo": arquivo,
             "tema": tema,
-            "criado_em": datetime.now41(),
+            "criado_em": datetime.now(),  # ✅ typo corrigido: now41() → now()
             "resumo": {
                 "perplexidade_media": round(resultado.perplexidade_media, 2),
                 "similares_ia_pct": round(resultado.similares_ia_pct, 2),
@@ -392,7 +462,6 @@ class DMBAnalyzer:
             sim_seq   = self.comparador.similaridade_sequencia(trecho, respostas_ia)
             sim_final = self.comparador.combinar(sim_tfidf, sim_seq)
 
-            # Classificação IA
             if sim_final >= self.THRESHOLD_IA or classe_perplex == "ia":
                 confianca = max(sim_final, conf_perplex)
                 resultado.trechos_ia.append(TrechoAnalise(
@@ -403,7 +472,6 @@ class DMBAnalyzer:
                 ))
                 continue
 
-            # Plágio
             fontes = self.plagio.verificar_trecho(trecho)
             if fontes:
                 resultado.trechos_plagio.append(TrechoAnalise(
@@ -415,7 +483,6 @@ class DMBAnalyzer:
                 ))
                 continue
 
-            # Fake news
             is_fake, explicacao = self.fakenews.verificar(trecho, tema)
             if is_fake:
                 resultado.trechos_fake_news.append(TrechoAnalise(
@@ -432,13 +499,11 @@ class DMBAnalyzer:
                 confianca=0.90,
             ))
 
-        # Métricas finais
         if perplexidades:
             resultado.perplexidade_media = sum(perplexidades) / len(perplexidades)
         total_trechos = total or 1
         resultado.similares_ia_pct = round(len(resultado.trechos_ia) / total_trechos * 100, 1)
 
-        # Salva no MongoDB
         self.cb("Salvando análise no banco de dados...")
         analise_id = self.salvar_analise(resultado, caminho_arquivo, tema, documento_id)
         resultado.resumo_geral = f"Análise concluída. ID: {analise_id}"
