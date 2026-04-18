@@ -1,39 +1,44 @@
+"""
+Extrai texto de arquivos enviados pelo usuário.
+Suporta: .txt, .pdf, .docx
+"""
 import io
-import pdfplumber
-from docx import Document
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile
 
 
 class ReaderService:
-    async def extract(self, file: UploadFile) -> str:
-        file_bytes = await file.read()
-        extension = file.filename.split(".")[-1].lower()
 
-        if extension == "pdf":
-            return self._read_pdf(file_bytes)
-        elif extension in ("docx", "doc"):
-            return self._read_docx(file_bytes)
-        elif extension in ("txt", "md"):
-            return self._read_txt(file_bytes)
+    @staticmethod
+    async def extrair_texto(file: UploadFile) -> str:
+        conteudo = await file.read()
+        nome = (file.filename or "").lower()
+
+        if nome.endswith(".pdf"):
+            return ReaderService._pdf(conteudo)
+        elif nome.endswith(".docx"):
+            return ReaderService._docx(conteudo)
         else:
-            raise HTTPException(
-                status_code=415,
-                detail=f"Tipo de arquivo não suportado: .{extension}"
-            )
+            # Tenta UTF-8, cai para latin-1
+            try:
+                return conteudo.decode("utf-8")
+            except UnicodeDecodeError:
+                return conteudo.decode("latin-1", errors="replace")
 
-    def _read_pdf(self, file_bytes: bytes) -> str:
-        text_parts = []
-        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
-        return "\n".join(text_parts)
+    @staticmethod
+    def _pdf(data: bytes) -> str:
+        try:
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(data))
+            paginas = [p.extract_text() or "" for p in reader.pages]
+            return "\n\n".join(paginas)
+        except Exception as e:
+            raise ValueError(f"Erro ao ler PDF: {e}")
 
-    def _read_docx(self, file_bytes: bytes) -> str:
-        doc = Document(io.BytesIO(file_bytes))
-        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-        return "\n".join(paragraphs)
-
-    def _read_txt(self, file_bytes: bytes) -> str:
-        return file_bytes.decode("utf-8", errors="replace")
+    @staticmethod
+    def _docx(data: bytes) -> str:
+        try:
+            import docx
+            doc = docx.Document(io.BytesIO(data))
+            return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+        except Exception as e:
+            raise ValueError(f"Erro ao ler DOCX: {e}")
