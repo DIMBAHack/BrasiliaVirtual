@@ -1,8 +1,0 @@
-.env
-notes.md
-.venv
-.gitignore
-fontes.py
-__init__.py
-__pycache__
-main.py
