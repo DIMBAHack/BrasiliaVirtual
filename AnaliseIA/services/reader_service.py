@@ -1,39 +1,63 @@
-import io
-import pdfplumber
-from docx import Document
-from fastapi import UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile
+from core.configDB import ConfigDB
+from fastapi.responses import StreamingResponse
+import os
+
+app = FastAPI()
+client = ConfigDB.get_db_file(self=ConfigDB())
+db = client["DMBAI"]
 
 
 class ReaderService:
-    async def extract(self, file: UploadFile) -> str:
-        file_bytes = await file.read()
-        extension = file.filename.split(".")[-1].lower()
+    def __init__(self, db):
+        self.db = db
 
-        if extension == "pdf":
-            return self._read_pdf(file_bytes)
-        elif extension in ("docx", "doc"):
-            return self._read_docx(file_bytes)
-        elif extension in ("txt", "md"):
-            return self._read_txt(file_bytes)
-        else:
-            raise HTTPException(
-                status_code=415,
-                detail=f"Tipo de arquivo não suportado: .{extension}"
-            )
+    @app.post("/upload/")
+    async def upload_file(file: UploadFile = File(...)):
+        text_coded = await file.read()
+        text_decoded = text_coded.decode("utf-8", errors="replace")
+        file_id = await db.fs.files.insert_one({
+            "filename": file.filename,
+            "contentType": file.content_type,
+            "data": text_decoded
+        })
+        
+        return {"file_id": str(file_id.inserted_id), "filename": file.filename}
 
-    def _read_pdf(self, file_bytes: bytes) -> str:
-        text_parts = []
-        with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
-        return "\n".join(text_parts)
+    async def save_file(self, file: UploadFile):
+        text_coded = await file.read()
+        text_decoded = text_coded.decode("utf-8", errors="replace")
+        file_id = await self.db.fs.files.insert_one({
+            "filename": file.filename,
+            "contentType": file.content_type,
+            "data": text_decoded
+        })
+        return str(file_id.inserted_id)
 
-    def _read_docx(self, file_bytes: bytes) -> str:
-        doc = Document(io.BytesIO(file_bytes))
-        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-        return "\n".join(paragraphs)
-
-    def _read_txt(self, file_bytes: bytes) -> str:
-        return file_bytes.decode("utf-8", errors="replace")
+    @app.get("/download/{file_id}")
+    async def download_file(file_id: str):
+        file_doc = await db.fs.files.find_one({"_id": file_id})
+        if not file_doc:
+            return {"error": "File not found"}
+        
+        return StreamingResponse(
+            iter([file_doc["data"]]),
+            media_type=file_doc["contentType"],
+            headers={"Content-Disposition": f"attachment; filename={file_doc['filename']}"}
+        )
+    
+    async def get_file(self, file_id: str):
+        file_doc = await self.db.fs.files.find_one({"_id": file_id})
+        if not file_doc:
+            return None
+        return file_doc
+    
+    async def get_file_content(self, file_id:str):
+        self.file_doc = await self.db.fs.files.find_one({"_id": file_id})
+        if not self.file_doc:
+            return None
+        return self.file_doc["data"]
+    
+    def files_list(self):
+        files = self.db.fs.files.find()
+        return files
