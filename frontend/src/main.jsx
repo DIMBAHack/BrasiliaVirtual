@@ -7,7 +7,7 @@ import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId="SEU_CLIENT_ID">
+    <GoogleOAuthProvider clientId="SEU_CLIENT_ID_REAL_AQUI"> {/* Substitua pelo seu Client ID real */}
       {/* O BrowserRouter deve envolver o App todo */}
       <BrowserRouter>
         <App />

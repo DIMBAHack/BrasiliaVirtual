@@ -3,6 +3,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { googleLogout } from '@react-oauth/google'; // Importe para limpar a sessão do Google
 import './Sidebar.css';
 
+// As props 'isSidebarOpen' e 'toggleSidebar' não são mais necessárias aqui.
+// O estado de abertura/fechamento é gerenciado pelo componente pai (App.jsx)
+// através de classes no elemento '.app-layout'.
 function Sidebar() {
   const navigate = useNavigate();
 
@@ -29,21 +32,20 @@ function Sidebar() {
   };
 
   return (
+    // A classe 'sidebar-closed' foi removida. A animação de esconder/mostrar
+    // é controlada pela classe '.sidebar-closed-layout' no elemento pai '.app-layout'
+    // (definido em App.jsx e estilizado em App.css). Isso centraliza a lógica
+    // de layout e evita conflitos de estilo.
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <span className="logo-icon">BV</span>
-        <h2>Brasília<span>Virtual</span></h2>
-      </div>
-
       <nav className="sidebar-nav">
         <NavLink to="/analise" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <span className="nav-dot"></span>
           Nova Análise
         </NavLink>
         
-        <NavLink to="/historico" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
+        <NavLink to="/minhasanalises" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <span className="nav-dot"></span>
-          Histórico
+          Minhas Análises
         </NavLink>
       </nav>
 

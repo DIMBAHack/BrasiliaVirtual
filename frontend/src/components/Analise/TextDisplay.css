@@ -1,0 +1,81 @@
+/* src/components/Analise/TextDisplay.css */
+
+.text-display-container {
+  background-color: #f9fafb;
+  border: 1px solid #f0f4f8;
+  border-radius: 12px;
+  padding: 20px 30px;
+  line-height: 1.7;
+  color: #374151;
+  font-size: 1rem;
+  
+  /* Adiciona a barra de rolagem quando o conteúdo excede a altura máxima */
+  max-height: 600px; /* Altura máxima antes de a rolagem aparecer */
+  overflow-y: auto; /* Mostra a barra de rolagem vertical apenas quando necessário */
+}
+
+/* Estilização da barra de rolagem (opcional, para um visual mais moderno) */
+.text-display-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.text-display-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.text-display-container::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.text-display-container::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.text-display-container p {
+  margin: 0 0 1em 0;
+}
+
+.text-display-container p:last-child {
+  margin-bottom: 0;
+}
+
+/* Estilos para os destaques (highlights) */
+.hl-ia, .hl-plagio, .hl-fonte {
+  position: relative;
+  background-color: rgba(255, 140, 105, 0.2); /* Cor base para IA */
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: 0 2px;
+}
+
+.hl-plagio {
+  background-color: rgba(127, 179, 213, 0.3); /* Cor para Plágio */
+}
+
+.hl-fonte {
+  background-color: rgba(243, 204, 138, 0.4); /* Cor para Fonte */
+}
+
+/* Estilos para as tags inline */
+.tag-inline {
+  font-size: 0.6rem;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  margin-left: 6px;
+  color: #fff;
+  background-color: #ff8c69; /* Cor base para IA */
+}
+
+.hl-plagio .tag-inline {
+  background-color: #7fb3d5; /* Cor para Plágio */
+}
+
+.hl-fonte .tag-inline {
+  background-color: #f3cc8a; /* Cor para Fonte */
+}

@@ -1,0 +1,27 @@
+/* c:\Users\anton\Desktop\FrontNew\BrasiliaVirtual\frontend\src\pages\HomePageContent.css */
+
+.home-page-content {
+  /* Ocupa toda a altura disponível abaixo do header */
+  min-height: calc(100vh - var(--header-height));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
+  box-sizing: border-box;
+  padding: 40px;
+  text-align: center;
+}
+
+.landing-page-container h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.landing-page-container p {
+  font-size: 1.2rem;
+  color: #6b7280;
+  max-width: 600px;
+  margin: 0 auto;
+}

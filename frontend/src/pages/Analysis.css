@@ -1,17 +1,16 @@
 /* src/pages/Analysis.css */
 
 .analysis-screen {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height));
   width: 100%; /* Ocupa o restante da tela */
   background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
   
   display: flex;
-  /* MUDANÇA AQUI: Alinha no início (esquerda) em vez de no centro */
-  justify-content: flex-start; 
+  justify-content: center; /* Centraliza o container principal */
   align-items: flex-start; /* Alinha no topo */
   
-  /* Ajuste o padding para dar um respiro da sidebar */
-  padding: 40px 40px 40px 20px; 
+  /* Padding simétrico para funcionar com e sem sidebar */
+  padding: 40px; 
   box-sizing: border-box;
 }
 
@@ -32,8 +31,75 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 20px;
   border-bottom: 1px solid #f0f0f0;
   padding-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  color: #374151;
+  font-weight: 500;
+  user-select: none;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .3s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #0062ff;
+}
+
+input:checked + .slider:before {
+  transform: translateX(18px);
 }
 
 .header-info h2 {
@@ -53,6 +119,15 @@
   grid-template-columns: 1fr 350px; /* Texto largo, lateral fixa */
   gap: 40px;
   flex: 1;
+}
+
+.analysis-main.occurrences-only-view {
+  display: block; /* Override grid display */
+}
+
+.analysis-main.occurrences-only-view .side-panel {
+  max-width: 700px;
+  margin: 0 auto; /* Center the panel */
 }
 
 /* Painel Lateral */

@@ -1,0 +1,153 @@
+/* src/components/Header/Header.css */
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px; /* Altura padrão do header */
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f4f8;
+  z-index: 1010; /* Acima do sidebar e do conteúdo */
+  display: flex;
+  align-items: center;
+}
+
+.header-content {
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Alinha itens à esquerda e à direita */
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ========================================================================== */
+/* === BOTÃO DE TOGGLE DO MENU (DENTRO DO HEADER) === */
+/* ========================================================================== */
+
+.sidebar-toggle-btn {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  background-color: transparent;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #f8fbff;
+  border-color: #0062ff;
+}
+
+.hamburger-icon {
+  position: relative;
+  width: 20px;
+  height: 2px;
+  background-color: #333; /* Cor mais escura para contraste */
+  border-radius: 1px;
+  transition: all 0.3s ease-in-out;
+}
+
+.hamburger-icon::before,
+.hamburger-icon::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #333;
+  border-radius: 1px;
+  transition: all 0.3s ease-in-out;
+}
+
+.hamburger-icon::before { top: -6px; }
+.hamburger-icon::after { top: 6px; }
+
+/* Animação para 'X' (REMOVIDA) */
+/* O ícone agora permanece o mesmo, aberto ou fechado */
+
+/* ========================================================================== */
+/* === LOGO NO HEADER === */
+/* ========================================================================== */
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Impede que o logo seja clicável ou selecionável */
+  pointer-events: none;
+  user-select: none;
+}
+
+.header-logo .logo-icon {
+  background-color: #0062ff;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.header-logo h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+/* ========================================================================== */
+/* === BOTÃO DE NOVA ANÁLISE (GLOBAL) === */
+/* ========================================================================== */
+
+.new-analysis-btn {
+  background-color: #0062ff;
+  color: #ffffff;
+  padding: 8px 16px; /* Padding ajustado para o header */
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem; /* Fonte ajustada para o header */
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 98, 255, 0.2);
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.new-analysis-btn:hover {
+  background-color: #004acb;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 98, 255, 0.3);
+}
+
+.new-analysis-btn .icon-plus {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+/* Responsividade para o botão no header */
+@media (max-width: 600px) {
+  .new-analysis-btn {
+    padding: 8px; /* Reduz padding */
+    font-size: 0; /* Esconde o texto "Nova Análise" */
+  }
+  .new-analysis-btn .icon-plus {
+    margin-right: 0; /* Remove margem extra quando o texto some */
+  }
+}
