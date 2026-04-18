@@ -18,18 +18,9 @@ class ConfigDB:
         except Exception as e:
             print(e)
         return files
-    
-    def fontesDB(self):
-        fontes = self.client["fontesDB"]
-        try:
-            self.client.admin.comman('ping')
-            print("Pinged your deployment. You successfully connected to MongoDB!")
-        except Exception as e:
-            print(e)
-        return fontes
-    
 
     def userDB(self):
+        user = self.client["UserDB"]
         user = self.client.admin.comman('ping')
         try:
             self.client.admin.comman('ping')
@@ -37,3 +28,4 @@ class ConfigDB:
         except Exception as e:
             print(e)
         return user
+    
