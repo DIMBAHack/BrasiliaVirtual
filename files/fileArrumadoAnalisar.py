@@ -41,10 +41,18 @@ class FileArrumadoAnalisar:
         enumerated_chunks = list(enumerate(self.chunks))
         return enumerated_chunks
     
-    def arquivos_analise(self):
-        file_analise = {"file_info" : self.file_management.upload_file(), 
-                        "chunks": self.enumerate_chunks()}
-        return file_analise
+    def format_chunks(self):
+        self.chunks = self.chuncking()
+        
+        formatted_chunks = [
+            {
+                "chunk_number": index,
+                "text": chunk
+            }
+            for index, chunk in enumerate(self.chunks)
+        ]
+        
+        return formatted_chunks
     
     
 
