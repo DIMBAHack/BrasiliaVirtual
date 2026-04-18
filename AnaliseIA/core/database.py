@@ -1,7 +1,7 @@
 from datetime import datetime
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient
-from core.config import settings
+from AnaliseIA.core.config import settings
 from models.db_models import DocumentoModel, ResultadoChunk
 
 

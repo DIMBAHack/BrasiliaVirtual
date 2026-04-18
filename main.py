@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from core.database import conectar, desconectar
-from api.rotas_documento import router
+from AnaliseIA.core.database import conectar, desconectar
+from api.routes import Routes
 
 
 @asynccontextmanager
@@ -12,4 +12,4 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(router)
+app.include_router(Routes)
