@@ -45,9 +45,7 @@ class AsyncMongoManager:
     @classmethod
     def conectar(cls):
         """Inicializa a conexão estaticamente."""
-        print('oi'+f' {cls._client}')
         if cls._client is None:
-
             cls._client = AsyncIOMotorClient(settings.MONGODB_URL)
             cls._db = cls._client[settings.MONGODB_DB_NAME]
             print("✅ Motor (async) conectado ao MongoDB (Estático)")

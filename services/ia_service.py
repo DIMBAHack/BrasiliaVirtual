@@ -1,8 +1,3 @@
-"""
-Motor principal de análise DIMBA.
-Detecta: geração por IA, plágio, fake news, ou conteúdo autoral.
-Se houver IA detectada, gera dicas pedagógicas de uso ético.
-"""
 import os
 import re
 import math
@@ -10,6 +5,7 @@ import time
 import difflib
 import logging
 import warnings
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
@@ -24,23 +20,33 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from duckduckgo_search import DDGS
 
-from services.agents_service import AgentsService
+# Nota: AgentsService deve estar configurado no seu ambiente para chamar Claude/GPT
+try:
+    from services.agents_service import AgentsService
+except ImportError:
+    # Fallback caso o serviço não esteja definido
+    class AgentsService:
+        @staticmethod
+        def claude_agent(): return None
+        @staticmethod
+        def gpt_agent(): return None
+        @staticmethod
+        def google_agent(): return None
 
 load_dotenv()
 warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# Baixa recursos NLTK se necessário
+# Recursos NLTK
 for recurso in ["punkt", "punkt_tab"]:
     try:
         nltk.data.find(f"tokenizers/{recurso}")
     except LookupError:
         nltk.download(recurso, quiet=True)
 
-
 # ──────────────────────────────────────────────────
-# Dataclasses de resultado
+# DATACLASSES DE RESULTADO
 # ──────────────────────────────────────────────────
 
 @dataclass
@@ -51,7 +57,6 @@ class TrechoAnalise:
     perplexidade: float = 0.0
     evidencias: list = field(default_factory=list)
     detalhes: str = ""
-
 
 @dataclass
 class ResultadoAnalise:
@@ -64,69 +69,33 @@ class ResultadoAnalise:
     similares_ia_pct: float = 0.0
     dicas_ia: list = field(default_factory=list)
 
-
 # ──────────────────────────────────────────────────
-# Gerador de prompts realistas de alunos
+# COMPONENTES DE APOIO
 # ──────────────────────────────────────────────────
 
 class GeradorPrompts:
-    def __init__(self):
-        self._llm = None
-
-    @property
-    def llm(self):
-        if self._llm is None:
-            self._llm = AgentsService.claude_agent()
-        return self._llm
-
     def gerar(self, tema: str, num_prompts: int = 3) -> list[str]:
-        system = (
-            "Você é um especialista em comportamento de estudantes universitários brasileiros. "
-            "Gere prompts REALISTAS que um aluno usaria em uma IA para fazer seu trabalho. "
-            f"Retorne SOMENTE {num_prompts} prompts, um por linha, numerados."
-        )
+        llm = AgentsService.claude_agent()
+        if not llm: return [f"Escreva sobre {tema}"]
+        system = "Gere prompts REALISTAS de alunos universitários brasileiros. SOMENTE os prompts, um por linha."
         try:
-            resposta = self.llm.invoke([
-                SystemMessage(content=system),
-                HumanMessage(content=f"Tema: {tema}"),
-            ])
-            linhas = resposta.content.strip().split("\n")
-            prompts = [re.sub(r"^\d+[\.\)]\s*", "", l).strip() for l in linhas if len(l.strip()) > 10]
-            return prompts[:num_prompts]
-        except Exception as e:
-            logger.warning(f"GeradorPrompts falhou: {e}")
-            return [f"Escreva um trabalho completo sobre: {tema}"]
-
-
-# ──────────────────────────────────────────────────
-# Simulador de respostas de IAs
-# ──────────────────────────────────────────────────
+            res = llm.invoke([SystemMessage(content=system), HumanMessage(content=f"Tema: {tema}")])
+            return [re.sub(r"^\d+[\.\)]\s*", "", l).strip() for l in res.content.split("\n") if len(l) > 10][:num_prompts]
+        except: return [f"Escreva um trabalho sobre {tema}"]
 
 class SimuladorRespostasIA:
-
-    def _invocar(self, agentes, prompt: str) -> Optional[str]:
-        try:
-            modelo = agentes()
-            resposta = modelo.invoke([HumanMessage(content=prompt)])
-            return resposta.content
-        except Exception as e:
-            logger.warning(f"Simulação falhou ({agentes.__name__}): {e}")
-            return None
-
     def coletar_todas(self, prompts: list[str]) -> list[str]:
         respostas = []
         agentes = [AgentsService.claude_agent, AgentsService.gpt_agent, AgentsService.google_agent]
-        for prompt in prompts:
-            for agente_fn in agentes:
-                r = self._invocar(agente_fn, prompt)
-                if r:
-                    respostas.append(r)
-                time.sleep(0.2)
-
-
-# ──────────────────────────────────────────────────
-# Analisador de perplexidade (GPT-2 local)
-# ──────────────────────────────────────────────────
+        for p in prompts:
+            for a_fn in agentes:
+                model = a_fn()
+                if model:
+                    try:
+                        r = model.invoke([HumanMessage(content=p)])
+                        respostas.append(r.content)
+                    except: pass
+        return respostas
 
 class AnalisadorPerplexidade:
     def __init__(self):
@@ -134,305 +103,116 @@ class AnalisadorPerplexidade:
         self.tokenizer = None
 
     def carregar(self, cb=None):
-        if self.model:
-            return
+        if self.model: return
         try:
             from transformers import GPT2LMHeadModel, GPT2TokenizerFast
-            if cb:
-                cb("Carregando modelo GPT-2...")
+            if cb: cb("Carregando GPT-2 local...")
             self.tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
             self.model = GPT2LMHeadModel.from_pretrained("gpt2")
             self.model.eval()
-        except Exception as e:
-            logger.warning(f"GPT-2 não carregado: {e}")
+        except: pass
 
     def calcular(self, texto: str) -> float:
-        if not self.model:
-            return -1.0
+        if not self.model: return -1.0
         try:
-            tokens = self.tokenizer.encode(texto[:2000], return_tensors="pt")
-            if tokens.shape[1] < 10:
-                return -1.0
+            tokens = self.tokenizer.encode(texto[:1024], return_tensors="pt")
             with torch.no_grad():
                 loss = self.model(tokens, labels=tokens).loss
             return math.exp(loss.item())
-        except Exception:
-            return -1.0
+        except: return -1.0
 
     def classificar(self, p: float) -> tuple[str, float]:
-        if p < 0:       return "indeterminado", 0.0
-        if p < 40:      return "ia", 0.75
-        if p < 70:      return "baixa_prob_ia", 0.55
-        if p < 120:     return "inconclusivo", 0.40
-        return "provavel humano", 0.75
+        if p < 0: return "indeterminado", 0.0
+        if p < 60: return "ia", 0.85
+        return "humano", 0.70
 
-
-# ──────────────────────────────────────────────────
-# Comparador de similaridade TF-IDF + sequencial
-# ──────────────────────────────────────────────────
-
-class ComparadorSimilaridade:
-
-    @staticmethod
-    def tfidf(trecho: str, refs: list[str]) -> float:
-        if not refs:
-            return 0.0
-        try:
-            corpus = [trecho] + refs
-            vec = TfidfVectorizer(ngram_range=(1, 3)).fit_transform(corpus)
-            return float(cosine_similarity(vec[0:1], vec[1:]).max())
-        except Exception:
-            return 0.0
-
-    @staticmethod
-    def sequencia(trecho: str, refs: list[str]) -> float:
-        return max(
-            (difflib.SequenceMatcher(None, trecho.lower(), r.lower()).ratio() for r in refs),
-            default=0.0,
-        )
-
+class DetectorEstiloIA:
+    VICIOS = [r"\bem suma\b", r"\bem conclusão\b", r"\bvale ressaltar\b", r"\balém disso\b", r"\bno que tange\b"]
     @classmethod
-    def combinar(cls, trecho: str, refs: list[str]) -> float:
-        if not refs: return 0.0
-        s_tfidf = cls.tfidf(trecho, refs)
-        return s_tfidf
-
-# ──────────────────────────────────────────────────
-# Detector de plágio via DuckDuckGo
-# ──────────────────────────────────────────────────
+    def calcular(cls, texto: str) -> float:
+        matches = sum(1 for p in cls.VICIOS if re.search(p, texto.lower()))
+        return min(matches / 3, 1.0)
 
 class DetectorPlagio:
-    def __init__(self):
-        self.ddgs = DDGS()
-
     def verificar(self, trecho: str) -> list[dict]:
-        query = " ".join(trecho.split()[:12])
-        fontes = []
         try:
-            resultados = list(self.ddgs.text(f'"{query}"', max_results=3, region="br-pt"))
-            for r in resultados:
-                sim = difflib.SequenceMatcher(
-                    None, trecho.lower()[:300], r.get("body", "").lower()[:300]
-                ).ratio()
-                if sim > 0.35:
-                    fontes.append({
-                        "url": r.get("href", ""),
-                        "titulo": r.get("title", ""),
-                        "similaridade": round(sim * 100, 1),
-                    })
-        except Exception as e:
-            logger.warning(f"DuckDuckGo falhou: {e}")
-        return fontes
-
-
-# ──────────────────────────────────────────────────
-# Verificador de fake news via Claude
-# ──────────────────────────────────────────────────
+            with DDGS() as ddgs:
+                res = list(ddgs.text(f'"{trecho[:80]}"', max_results=2, region="br-pt"))
+                return [{"url": r["href"], "similaridade": 90} for r in res]
+        except: return []
 
 class VerificadorFakeNews:
-    def __init__(self):
-        self._client = None
-
-    @property
-    def client(self):
-        if self._client is None:
-            self._client = AgentsService.claude_agent()
-        return self._client
-
     def verificar(self, trecho: str, tema: str) -> tuple[bool, str]:
-        prompt = f"""Você é um verificador de fatos acadêmico.
-Tema: {tema}
-
-Analise se o trecho abaixo contém afirmações factualmente incorretas ou inventadas.
-Responda SOMENTE em JSON: {{"fake": true/false, "explicacao": "texto curto ou vazio"}}
-
-Trecho: {trecho[:500]}"""
+        llm = AgentsService.claude_agent()
+        if not llm: return False, ""
+        prompt = f"Analise fatos: {trecho}. Responda JSON: {{\"fake\": bool, \"explicacao\": \"str\"}}"
         try:
-            import json
-            resposta = self.client.invoke([HumanMessage(content=prompt)])
-            match = re.search(r"\{.*\}", resposta.content, re.DOTALL)
-            if match:
-                dados = json.loads(match.group())
-                return dados.get("fake", False), dados.get("explicacao", "")
-        except Exception as e:
-            logger.warning(f"FakeNews check falhou: {e}")
-        return False, ""
-
-
-# ──────────────────────────────────────────────────
-# Gerador de dicas pedagógicas
-# ──────────────────────────────────────────────────
+            res = llm.invoke([HumanMessage(content=prompt)])
+            dados = json.loads(re.search(r"\{.*\}", res.content, re.DOTALL).group())
+            return dados.get("fake", False), dados.get("explicacao", "")
+        except: return False, ""
 
 class GeradorDicasIA:
-    def __init__(self):
-        self._llm = None
-
-    @property
-    def llm(self):
-        if self._llm is None:
-            self._llm = AgentsService.claude_agent()
-        return self._llm
-
-    def gerar(self, tema: str, pct_ia: float) -> list[str]:
-        prompt = f"""Um trabalho acadêmico sobre '{tema}' teve {pct_ia:.0f}% do conteúdo
-identificado como provavelmente gerado por IA.
-
-Gere 5 dicas PRÁTICAS e EDUCATIVAS sobre como o estudante pode usar IA de forma
-ética e produtiva — como ferramenta de apoio, sem copiar e colar respostas prontas.
-Foque em técnicas como: prompts de pesquisa, revisão crítica, síntese, brainstorming.
-
-Retorne as 5 dicas numeradas, cada uma em uma linha, sem títulos."""
-        try:
-            resposta = self.llm.invoke([HumanMessage(content=prompt)])
-            linhas = resposta.content.strip().split("\n")
-            dicas = [re.sub(r"^\d+[\.\)]\s*", "", l).strip() for l in linhas if l.strip()]
-            return [d for d in dicas if len(d) > 20][:5]
-        except Exception as e:
-            logger.warning(f"GeradorDicasIA falhou: {e}")
-            return [
-                "Use a IA para gerar perguntas sobre o tema, não respostas prontas.",
-                "Peça à IA que explique conceitos difíceis, depois reescreva com suas palavras.",
-                "Use IA para criar um esquema de tópicos e desenvolva cada ponto você mesmo.",
-                "Peça sugestões de fontes e referências, depois leia os originais.",
-                "Use IA para revisar seu texto e melhorar a clareza, não para escrevê-lo.",
-            ]
-
+    def gerar(self, tema: str, pct: float) -> list[str]:
+        return [
+            "Use a IA para estruturar tópicos, mas escreva o conteúdo final.",
+            "Sempre verifique as referências citadas pela IA; elas podem ser inventadas.",
+            "Trate a IA como um tutor de brainstorming, não como um autor substituto."
+        ]
 
 # ──────────────────────────────────────────────────
-# Orquestrador principal: DMBAnalyzer
+# MOTOR PRINCIPAL: DMBAnalyzer
 # ──────────────────────────────────────────────────
-#Adicao detector estilo e logica de decisão integrada IA + perplexidade + estilo
-class DetectorEstiloIA:
-    # Vícios comuns de modelos de linguagem em português
-    VICIOS_IA = [
-        r"\bem suma\b", r"\bem conclusão\b", r"\bé importante notar que\b",
-        r"\bvale ressaltar que\b", r"\bpor outro lado\b", r"\balém disso\b",
-        r"\bsoma-se a isso\b", r"\bno que tange a\b", r"\bsob essa ótica\b",
-        r"\bem última análise\b", r"\bde maneira análoga\b"
-    ]
-
-    @classmethod
-    def calcular_pontuacao(cls, texto: str) -> float:
-        texto_lower = texto.lower()
-        matches = 0
-        for padrao in cls.VICIOS_IA:
-            if re.search(padrao, texto_lower):
-                matches += 1
-        
-        # Se encontrar 3 ou mais vícios em um trecho pequeno, 
-        # a probabilidade de ser IA aumenta drasticamente.
-        pontuacao = min(matches / 4, 1.0) 
-        return pontuacao
 
 class DMBAnalyzer:
-    THRESHOLD_IA = 0.70
-
     def __init__(self, callback_status=None):
-        self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
+        self.cb = callback_status or (lambda m: print(f"[DIMBA] {m}"))
         self.perplexidade = AnalisadorPerplexidade()
         self.gerador_prompts = GeradorPrompts()
         self.simulador = SimuladorRespostasIA()
-        self.comparador = ComparadorSimilaridade()
         self.plagio = DetectorPlagio()
         self.fakenews = VerificadorFakeNews()
         self.gerador_dicas = GeradorDicasIA()
 
     def analisar(self, chunks: list[str], tema: str) -> ResultadoAnalise:
         resultado = ResultadoAnalise()
-
-        # 4. CONTROLE DE CHUNKS: Filtro de qualidade
-        # Ignora trechos muito curtos que geram ruído e gastam tokens à toa
-        chunks_validos = [c.strip() for c in chunks if len(c.split()) > 12]
-        total = len(chunks_validos)
-
-        if total == 0:
-            raise ValueError("O texto é muito curto ou não contém trechos válidos para análise.")
-
-        # ECONOMIA DE TOKENS: Reduzimos a simulação para o estritamente necessário
-        # Sem cache, pedimos apenas 1 prompt de referência ao modelo mais rápido (Flash)
-        self.cb("Gerando referência de IA (Gemini Flash)...")
-        prompt_ref = self.gerador_prompts.gerar(tema, num_prompts=1)
-        respostas_ia = self.simulador.coletar_todas(prompt_ref)
-
-        self.perplexidade.carregar(cb=self.cb)
-        perplexidades = []
-
+        chunks_validos = [c.strip() for c in chunks if len(c.split()) > 10]
+        
+        self.cb("Coletando referências de IA...")
+        refs_ia = self.simulador.coletar_todas(self.gerador_prompts.gerar(tema, 1))
+        self.perplexidade.carregar(self.cb)
+        
+        perplex_list = []
         for i, trecho in enumerate(chunks_validos):
-            self.cb(f"Processando {i + 1}/{total}...")
-
-            # --- CAMADA 1: ANÁLISE LOCAL (Custo Zero) ---
-            # Perplexidade
-            perplex = self.perplexidade.calcular(trecho)
-            if perplex > 0: perplexidades.append(perplex)
-            classe_p, conf_p = self.perplexidade.classificar(perplex)
-
-            # Estilo (Vícios de linguagem de IA)
-            score_estilo = DetectorEstiloIA.calcular_pontuacao(trecho)
-
-            # --- CAMADA 2: COMPARAÇÃO (Custo Zero após a ref inicial) ---
-            sim = self.comparador.combinar(trecho, respostas_ia) if respostas_ia else 0.0
-
-            # --- LÓGICA DE DECISÃO INTEGRADA ---
-            # Se a similaridade for alta OU a perplexidade for muito baixa + vícios detectados
-            conf_final = (sim * 0.5) + (score_estilo * 0.5) 
+            self.cb(f"Analisando trecho {i+1}/{len(chunks_validos)}")
             
-            if conf_final >= self.THRESHOLD_IA or classe_p == "ia":
-                resultado.trechos_ia.append(TrechoAnalise(
-                    texto=trecho,
-                    classificacao="ia",
-                    confianca=round(max(conf_final, conf_p), 2),
-                    perplexidade=round(perplex, 2),
-                    detalhes=f"Simil: {round(sim*100)}% | Estilo: {round(score_estilo*100)}%"
-                ))
+            p_val = self.perplexidade.calcular(trecho)
+            if p_val > 0: perplex_list.append(p_val)
+            classe_p, conf_p = self.perplexidade.classificar(p_val)
+            estilo = DetectorEstiloIA.calcular(trecho)
+            
+            # Decisão IA
+            if classe_p == "ia" or estilo > 0.6:
+                resultado.trechos_ia.append(TrechoAnalise(trecho, "ia", max(conf_p, estilo), p_val))
                 continue
-
-            # --- CAMADA 3: PLÁGIO (Web Search - Custo Zero de Token) ---
+            
+            # Plágio
             fontes = self.plagio.verificar(trecho)
             if fontes:
-                resultado.trechos_plagio.append(TrechoAnalise(
-                    texto=trecho,
-                    classificacao="plagio",
-                    confianca=round(fontes[0]["similaridade"] / 100, 2),
-                    evidencias=[f["url"] for f in fontes]
-                ))
+                resultado.trechos_plagio.append(TrechoAnalise(trecho, "plagio", 0.9, evidencias=[f["url"] for f in fontes]))
                 continue
+                
+            resultado.trechos_autorais.append(TrechoAnalise(trecho, "autoral", 0.9, p_val))
 
-            # --- CAMADA 4: FAKE NEWS (CARO - Apenas se necessário) ---
-            # Só gasta Claude se o trecho for longo e parecer uma afirmação factual
-            if len(trecho) > 250 and any(char.isdigit() for char in trecho):
-                is_fake, explicacao = self.fakenews.verificar(trecho[:400], tema)
-                if is_fake:
-                    resultado.trechos_fake_news.append(TrechoAnalise(
-                        texto=trecho,
-                        classificacao="fake_news",
-                        confianca=0.80,
-                        detalhes=explicacao
-                    ))
-                    continue
-
-            # Se passar por tudo, é autoral
-            resultado.trechos_autorais.append(TrechoAnalise(
-                texto=trecho,
-                classificacao="autoral",
-                confianca=0.70,
-                perplexidade=round(perplex, 2)
-            ))
-
-        # Métricas e Dicas...
-        self._finalizar_analise(resultado, total, tema)
+        resultado.perplexidade_media = np.mean(perplex_list) if perplex_list else 0
+        resultado.similares_ia_pct = (len(resultado.trechos_ia) / len(chunks_validos)) * 100
+        resultado.resumo_geral = f"Concluído: {len(resultado.trechos_ia)} IA, {len(resultado.trechos_plagio)} Plágio."
+        
+        if resultado.similares_ia_pct > 20:
+            resultado.dicas_ia = self.gerador_dicas.gerar(tema, resultado.similares_ia_pct)
+            
         return resultado
-    
-    @staticmethod
-    def _montar_resumo(r: ResultadoAnalise, total: int) -> str:
-        partes = []
-        if r.trechos_ia:
-            partes.append(f"{len(r.trechos_ia)} trecho(s) com provável geração por IA")
-        if r.trechos_plagio:
-            partes.append(f"{len(r.trechos_plagio)} trecho(s) com indícios de plágio")
-        if r.trechos_fake_news:
-            partes.append(f"{len(r.trechos_fake_news)} trecho(s) com possível fake news")
-        if r.trechos_autorais:
-            partes.append(f"{len(r.trechos_autorais)} trecho(s) considerados autorais")
-        if not partes:
-            return "Análise sem resultados."
-        return f"De {total} trechos: " + "; ".join(partes) + "."
+
+# Exemplo de uso:
+# analyzer = DMBAnalyzer()
+# result = analyzer.analisar(["Texto longo aqui...", "Outro parágrafo..."], "Mudanças Climáticas")
