@@ -104,23 +104,24 @@ class GeradorPrompts:
 
 class SimuladorRespostasIA:
 
-    def _invocar(self, agente_fn, prompt: str) -> Optional[str]:
+    def _invocar(self, agentes, prompt: str) -> Optional[str]:
         try:
-            modelo = agente_fn()
+            modelo = agentes()
             resposta = modelo.invoke([HumanMessage(content=prompt)])
             return resposta.content
         except Exception as e:
-            logger.warning(f"Simulação falhou ({agente_fn.__name__}): {e}")
+            logger.warning(f"Simulação falhou ({agentes.__name__}): {e}")
             return None
 
     def coletar_todas(self, prompts: list[str]) -> list[str]:
         respostas = []
-        agente_fn = AgentsService.google_agent 
-        for prompt in prompts[:1]: 
-            r = self._invocar(agente_fn, prompt)
-            if r:
-                respostas.append(r)
-        return respostas
+        agentes = [AgentsService.claude_agent, AgentsService.gpt_agent, AgentsService.google_agent]
+        for prompt in prompts:
+            for agente_fn in agentes:
+                r = self._invocar(agente_fn, prompt)
+                if r:
+                    respostas.append(r)
+                time.sleep(0.2)
 
 
 # ──────────────────────────────────────────────────
@@ -160,10 +161,10 @@ class AnalisadorPerplexidade:
 
     def classificar(self, p: float) -> tuple[str, float]:
         if p < 0:       return "indeterminado", 0.0
-        if p < 40:      return "prob_alta_ia", 0.85
+        if p < 40:      return "ia", 0.75
         if p < 70:      return "baixa_prob_ia", 0.55
         if p < 120:     return "inconclusivo", 0.40
-        return "humano", 0.75
+        return "provavel humano", 0.75
 
 
 # ──────────────────────────────────────────────────
@@ -324,7 +325,7 @@ class DetectorEstiloIA:
         return pontuacao
 
 class DMBAnalyzer:
-    THRESHOLD_IA = 0.75  # Ajustado para equilíbrio entre precisão e custo
+    THRESHOLD_IA = 0.70
 
     def __init__(self, callback_status=None):
         self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
@@ -370,7 +371,7 @@ class DMBAnalyzer:
             # Se a similaridade for alta OU a perplexidade for muito baixa + vícios detectados
             conf_final = (sim * 0.5) + (score_estilo * 0.5) 
             
-            if conf_final >= self.THRESHOLD_IA or classe_p == "prob_alta_ia":
+            if conf_final >= self.THRESHOLD_IA or classe_p == "ia":
                 resultado.trechos_ia.append(TrechoAnalise(
                     texto=trecho,
                     classificacao="ia",
@@ -399,7 +400,7 @@ class DMBAnalyzer:
                     resultado.trechos_fake_news.append(TrechoAnalise(
                         texto=trecho,
                         classificacao="fake_news",
-                        confianca=0.85,
+                        confianca=0.80,
                         detalhes=explicacao
                     ))
                     continue
@@ -408,7 +409,7 @@ class DMBAnalyzer:
             resultado.trechos_autorais.append(TrechoAnalise(
                 texto=trecho,
                 classificacao="autoral",
-                confianca=0.90,
+                confianca=0.70,
                 perplexidade=round(perplex, 2)
             ))
 
