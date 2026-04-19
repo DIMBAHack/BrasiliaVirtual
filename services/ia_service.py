@@ -192,10 +192,9 @@ class ComparadorSimilaridade:
 
     @classmethod
     def combinar(cls, trecho: str, refs: list[str]) -> float:
+        if not refs: return 0.0
         s_tfidf = cls.tfidf(trecho, refs)
-        s_seq = cls.sequencia(trecho, refs)
-        return (s_tfidf * 0.6) + (s_seq * 0.4)
-
+        return s_tfidf
 
 # ──────────────────────────────────────────────────
 # Detector de plágio via DuckDuckGo
@@ -301,120 +300,122 @@ Retorne as 5 dicas numeradas, cada uma em uma linha, sem títulos."""
 # ──────────────────────────────────────────────────
 # Orquestrador principal: DMBAnalyzer
 # ──────────────────────────────────────────────────
+#Adicao detector estilo e logica de decisão integrada IA + perplexidade + estilo
+class DetectorEstiloIA:
+    # Vícios comuns de modelos de linguagem em português
+    VICIOS_IA = [
+        r"\bem suma\b", r"\bem conclusão\b", r"\bé importante notar que\b",
+        r"\bvale ressaltar que\b", r"\bpor outro lado\b", r"\balém disso\b",
+        r"\bsoma-se a isso\b", r"\bno que tange a\b", r"\bsob essa ótica\b",
+        r"\bem última análise\b", r"\bde maneira análoga\b"
+    ]
+
+    @classmethod
+    def calcular_pontuacao(cls, texto: str) -> float:
+        texto_lower = texto.lower()
+        matches = 0
+        for padrao in cls.VICIOS_IA:
+            if re.search(padrao, texto_lower):
+                matches += 1
+        
+        # Se encontrar 3 ou mais vícios em um trecho pequeno, 
+        # a probabilidade de ser IA aumenta drasticamente.
+        pontuacao = min(matches / 4, 1.0) 
+        return pontuacao
 
 class DMBAnalyzer:
-    THRESHOLD_IA = 0.85
+    THRESHOLD_IA = 0.75  # Ajustado para equilíbrio entre precisão e custo
 
     def __init__(self, callback_status=None):
         self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
-        self.gerador_prompts  = GeradorPrompts()
-        self.simulador        = SimuladorRespostasIA()
-        self.perplexidade     = AnalisadorPerplexidade()
-        self.comparador       = ComparadorSimilaridade()
-        self.plagio           = DetectorPlagio()
-        self.fakenews         = VerificadorFakeNews()
-        self.dicas_ia         = GeradorDicasIA()
+        self.perplexidade = AnalisadorPerplexidade()
+        # Outros serviços...
 
     def analisar(self, chunks: list[str], tema: str) -> ResultadoAnalise:
         resultado = ResultadoAnalise()
 
-        if not chunks:
-            raise ValueError("Nenhum trecho para analisar.")
+        # 4. CONTROLE DE CHUNKS: Filtro de qualidade
+        # Ignora trechos muito curtos que geram ruído e gastam tokens à toa
+        chunks_validos = [c.strip() for c in chunks if len(c.split()) > 12]
+        total = len(chunks_validos)
 
-        self.cb("Gerando prompts baseados no tema...")
-        prompts = self.gerador_prompts.gerar(tema, num_prompts=3)
-        self.cb(f"   → {len(prompts)} prompts gerados.")
+        if total == 0:
+            raise ValueError("O texto é muito curto ou não contém trechos válidos para análise.")
 
-        self.cb("Coletando respostas das IAs para referência...")
-        respostas_ia = self.simulador.coletar_todas(prompts)
-        self.cb(f"   → {len(respostas_ia)} respostas coletadas.")
+        # ECONOMIA DE TOKENS: Reduzimos a simulação para o estritamente necessário
+        # Sem cache, pedimos apenas 1 prompt de referência ao modelo mais rápido (Flash)
+        self.cb("Gerando referência de IA (Gemini Flash)...")
+        prompt_ref = self.gerador_prompts.gerar(tema, num_prompts=1)
+        respostas_ia = self.simulador.coletar_todas(prompt_ref)
 
         self.perplexidade.carregar(cb=self.cb)
-
         perplexidades = []
-        total = len(chunks)
 
-        for i, trecho in enumerate(chunks):
-            self.cb(f"Analisando trecho {i + 1}/{total}...")
-            perplex = self.perplexidade.calcular(trecho) 
-            #add perplexidade resultado analise
-            if perplex > 0:
-                perplexidades.append(perplex)
-            classe_perplex, conf_perplex = self.perplexidade.classificar(perplex)
-            resultado.trechos_ia.append(TrechoAnalise(
-                texto=trecho,
-                classificacao="ia",
-                confianca=round(confianca, 2),
-                perplexidade=round(perplex, 2), 
-                detalhes=f"Perplexidade: {round(perplex, 2)}",
-            ))
+        for i, trecho in enumerate(chunks_validos):
+            self.cb(f"Processando {i + 1}/{total}...")
 
-            # Perplexidade (GPT-2)
+            # --- CAMADA 1: ANÁLISE LOCAL (Custo Zero) ---
+            # Perplexidade
             perplex = self.perplexidade.calcular(trecho)
-            if perplex > 0:
-                perplexidades.append(perplex)
-            classe_perplex, conf_perplex = self.perplexidade.classificar(perplex)
+            if perplex > 0: perplexidades.append(perplex)
+            classe_p, conf_p = self.perplexidade.classificar(perplex)
 
-            # Similaridade com respostas de IA
+            # Estilo (Vícios de linguagem de IA)
+            score_estilo = DetectorEstiloIA.calcular_pontuacao(trecho)
+
+            # --- CAMADA 2: COMPARAÇÃO (Custo Zero após a ref inicial) ---
             sim = self.comparador.combinar(trecho, respostas_ia) if respostas_ia else 0.0
 
-            # ─ Classificação ─────────────────────────
-
-            if sim >= self.THRESHOLD_IA or classe_perplex == "ia":
-                confianca = max(sim, conf_perplex)
+            # --- LÓGICA DE DECISÃO INTEGRADA ---
+            # Se a similaridade for alta OU a perplexidade for muito baixa + vícios detectados
+            conf_final = (sim * 0.5) + (score_estilo * 0.5) 
+            
+            if conf_final >= self.THRESHOLD_IA or classe_p == "prob_alta_ia":
                 resultado.trechos_ia.append(TrechoAnalise(
                     texto=trecho,
                     classificacao="ia",
-                    confianca=round(confianca, 2),
-                    detalhes=f"Similaridade: {round(sim * 100, 1)}% | Perplexidade: {round(perplex, 1)}",
+                    confianca=round(max(conf_final, conf_p), 2),
+                    perplexidade=round(perplex, 2),
+                    detalhes=f"Simil: {round(sim*100)}% | Estilo: {round(score_estilo*100)}%"
                 ))
                 continue
 
-            # Plágio
+            # --- CAMADA 3: PLÁGIO (Web Search - Custo Zero de Token) ---
             fontes = self.plagio.verificar(trecho)
             if fontes:
                 resultado.trechos_plagio.append(TrechoAnalise(
                     texto=trecho,
                     classificacao="plagio",
                     confianca=round(fontes[0]["similaridade"] / 100, 2),
-                    evidencias=[f["url"] for f in fontes],
-                    detalhes=f"{len(fontes)} fonte(s) similar(es) encontrada(s)",
+                    evidencias=[f["url"] for f in fontes]
                 ))
                 continue
 
-            if not any(char.isdigit() for char in trecho) and len(trecho) < 200:
-                continue
-            is_fake, explicacao = self.fakenews.verificar(trecho, tema)
-            if is_fake:
-                resultado.trechos_fake_news.append(TrechoAnalise(
-                    texto=trecho,
-                    classificacao="fake_news",
-                    confianca=0.80,
-                    detalhes=explicacao,
-                ))
-                continue
+            # --- CAMADA 4: FAKE NEWS (CARO - Apenas se necessário) ---
+            # Só gasta Claude se o trecho for longo e parecer uma afirmação factual
+            if len(trecho) > 250 and any(char.isdigit() for char in trecho):
+                is_fake, explicacao = self.fakenews.verificar(trecho[:400], tema)
+                if is_fake:
+                    resultado.trechos_fake_news.append(TrechoAnalise(
+                        texto=trecho,
+                        classificacao="fake_news",
+                        confianca=0.85,
+                        detalhes=explicacao
+                    ))
+                    continue
 
+            # Se passar por tudo, é autoral
             resultado.trechos_autorais.append(TrechoAnalise(
                 texto=trecho,
                 classificacao="autoral",
                 confianca=0.90,
+                perplexidade=round(perplex, 2)
             ))
 
-        # Métricas finais
-        if perplexidades:
-            resultado.perplexidade_media = sum(perplexidades) / len(perplexidades)
-
-        total_nz = total or 1
-        resultado.similares_ia_pct = round(len(resultado.trechos_ia) / total_nz * 100, 1)
-
-        # Gera dicas se houver IA detectada
-        if resultado.trechos_ia:
-            self.cb("Gerando dicas pedagógicas sobre uso ético de IA...")
-            resultado.dicas_ia = self.dicas_ia.gerar(tema, resultado.similares_ia_pct)
-
-        resultado.resumo_geral = self._montar_resumo(resultado, total)
+        # Métricas e Dicas...
+        self._finalizar_analise(resultado, total, tema)
         return resultado
-
+    
     @staticmethod
     def _montar_resumo(r: ResultadoAnalise, total: int) -> str:
         partes = []
