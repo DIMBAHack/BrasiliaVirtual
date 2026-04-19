@@ -330,7 +330,12 @@ class DMBAnalyzer:
     def __init__(self, callback_status=None):
         self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
         self.perplexidade = AnalisadorPerplexidade()
-        # Outros serviços...
+        self.gerador_prompts = GeradorPrompts()
+        self.simulador = SimuladorRespostasIA()
+        self.comparador = ComparadorSimilaridade()
+        self.plagio = DetectorPlagio()
+        self.fakenews = VerificadorFakeNews()
+        self.gerador_dicas = GeradorDicasIA()
 
     def analisar(self, chunks: list[str], tema: str) -> ResultadoAnalise:
         resultado = ResultadoAnalise()
