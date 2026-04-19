@@ -1,27 +1,209 @@
 /* c:\Users\anton\Desktop\FrontNew\BrasiliaVirtual\frontend\src\pages\HomePageContent.css */
 
+:root {
+  --header-height: 60px;
+  --primary-color: #0062ff;
+  --primary-hover: #004acb;
+  --text-dark: #111827;
+  --text-light: #6b7280;
+  --bg-light: #f9fafb;
+  --border: #e5e7eb;
+}
+
 .home-page-content {
-  /* Ocupa toda a altura disponível abaixo do header */
+  background: #ffffff;
+  width: 100%;
+}
+
+/* ========================================================================== */
+/* === HERO SECTION === */
+/* ========================================================================== */
+
+.hero-section {
   min-height: calc(100vh - var(--header-height));
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 100%);
-  box-sizing: border-box;
-  padding: 40px;
+  background: linear-gradient(135deg, #0062ff 0%, #0062ff 1%, #f0f7ff 40%, #ffffff 100%);
+  position: relative;
+  padding: 60px 20px;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(0, 98, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(0, 98, 255, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-content {
   text-align: center;
+  max-width: 700px;
+  position: relative;
+  z-index: 1;
 }
 
-.landing-page-container h1 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #111827;
+.hero-content h1 {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--text-dark);
   margin-bottom: 16px;
+  letter-spacing: -0.02em;
 }
 
-.landing-page-container p {
-  font-size: 1.2rem;
-  color: #6b7280;
-  max-width: 600px;
-  margin: 0 auto;
+.hero-content .subtitle {
+  font-size: 1.15rem;
+  color: #666666;
+  font-weight: 400;
+  margin-bottom: 16px;
+  letter-spacing: 0.3px;
+}
+
+.hero-content .description {
+  font-size: 0.95rem;
+  color: #666666;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  font-weight: 400;
+}
+
+/* ========================================================================== */
+/* === FEATURES SECTION === */
+/* ========================================================================== */
+
+.features-section {
+  display: none;
+}
+
+/* ========================================================================== */
+/* === BENEFITS SECTION === */
+/* ========================================================================== */
+
+.benefits-section {
+  display: none;
+}
+
+/* ========================================================================== */
+/* === CTA SECTION === */
+/* ========================================================================== */
+
+.cta-section {
+  display: none;
+}
+
+/* ========================================================================== */
+/* === BOTÕES === */
+/* ========================================================================== */
+
+.btn {
+  padding: 11px 28px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  display: inline-block;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-cta {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  padding: 11px 28px;
+  font-size: 0.95rem;
+}
+
+.btn-cta:hover {
+  background-color: var(--primary-hover);
+}
+
+/* ========================================================================== */
+/* === RESPONSIVIDADE === */
+/* ========================================================================== */
+
+@media (max-width: 768px) {
+  .hero-content h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-content .subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-content .description {
+    font-size: 1rem;
+  }
+
+  .benefits-section h2,
+  .cta-section h2 {
+    font-size: 2rem;
+  }
+
+  .features-container,
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-item,
+  .benefit-card {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-section {
+    padding: 40px 16px;
+    min-height: auto;
+  }
+
+  .hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .hero-content .subtitle {
+    font-size: 1rem;
+  }
+
+  .hero-content .description {
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+  }
+
+  .features-section,
+  .benefits-section,
+  .cta-section {
+    padding: 60px 16px;
+  }
+
+  .benefits-section h2,
+  .cta-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 40px;
+  }
+
+  .features-container,
+  .benefits-grid {
+    gap: 20px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 12px 24px;
+  }
 }

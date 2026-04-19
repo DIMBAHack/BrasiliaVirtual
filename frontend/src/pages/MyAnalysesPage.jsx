@@ -1,6 +1,7 @@
 import './MyAnalysesPage.css';
 import { useState } from 'react';
 import AnalysisCard from './AnalysisCard';
+import UploadModal from './UploadModal';
 
 // Dados fictícios para os cards
 const mockAnalyses = [
@@ -34,20 +35,33 @@ function MyAnalysesPage() {
   // TODO: Substitua este estado por uma lógica real para verificar se há análises
   const [analyses, setAnalyses] = useState(mockAnalyses); 
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <div className={`my-analyses-page ${analyses.length > 0 ? 'has-analyses' : ''}`}> 
-      {analyses.length > 0 ? (
-        <div className="analyses-container">
+    <div className={`my-analyses-page ${analyses.length > 0 ? 'has-analyses' : ''}`}>
+      <div className="analyses-container">
+        <div className="page-header">
           <h2 className="page-title">Minhas Análises</h2>
+          <button className="new-analysis-btn" onClick={() => setIsModalOpen(true)}>
+            <span className="icon-plus">+</span>
+            Nova Análise
+          </button>
+        </div>
+
+        {analyses.length > 0 ? (
           <div className="analyses-grid">
             {analyses.map(analysis => (
               <AnalysisCard key={analysis.id} {...analysis} />
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="no-analyses-background-text">Nenhuma análise realizada</div>
-      )}
+        ) : (
+          <div className="no-analyses-placeholder">
+            <p className="no-analyses-text">Nenhuma análise realizada</p>
+          </div>
+        )}
+      </div>
+
+      <UploadModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }

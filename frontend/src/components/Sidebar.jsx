@@ -38,11 +38,6 @@ function Sidebar() {
     // de layout e evita conflitos de estilo.
     <aside className="sidebar">
       <nav className="sidebar-nav">
-        <NavLink to="/analise" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
-          <span className="nav-dot"></span>
-          Nova Análise
-        </NavLink>
-        
         <NavLink to="/minhasanalises" className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}>
           <span className="nav-dot"></span>
           Minhas Análises

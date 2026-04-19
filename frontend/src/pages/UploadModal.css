@@ -29,15 +29,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px 32px;
-  border-bottom: 1px solid #f0f4f8;
+  padding: 16px 24px; /* Padding ajustado para um cabeçalho mais compacto */
+  border-bottom: none; /* Remove a linha divisória */
 }
 
 .modal-header h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
+  display: none; /* Oculta o título "Iniciar nova análise" */
 }
 
 .close-btn {
@@ -48,6 +45,7 @@
   color: #9ca3af;
   cursor: pointer;
   transition: color 0.2s ease;
+  display: none; /* Oculta o botão 'X' para um design mais limpo */
 }
 
 .close-btn:hover {
@@ -138,6 +136,7 @@
 
 .modal-footer {
   display: flex;
+  flex-direction: row; /* Garante que os botões fiquem em linha */
   justify-content: flex-end;
   gap: 12px;
   padding: 24px 32px;

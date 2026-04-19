@@ -1,13 +1,24 @@
+import { useNavigate } from 'react-router-dom';
 import './HomePageContent.css';
 
 function HomePageContent() {
+  const navigate = useNavigate();
+
   return (
     <div className="home-page-content">
-      <div className="landing-page-container">
-        <h1>Bem-vindo ao Verificador de IA</h1>
-        <p>Sua ferramenta para garantir a autenticidade e originalidade de documentos.</p>
-        {/* Futuramente, mais conteúdo de apresentação aqui */}
-      </div>
+      <section className="hero-section">
+        <div className="hero-content">
+          <h1>DMD Análise</h1>
+          <p className="subtitle">Plataforma inteligente para detecção de integridade acadêmica</p>
+          <p className="description">
+            Identifique IA, plágio e verifique autenticidade de trabalhos com precisão
+          </p>
+          
+          <button className="btn btn-primary" onClick={() => navigate('/login')}>
+            Começar
+          </button>
+        </div>
+      </section>
     </div>
   );
 }

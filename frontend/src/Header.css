@@ -85,23 +85,19 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  /* Impede que o logo seja clicável ou selecionável */
-  pointer-events: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 8px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
   user-select: none;
 }
 
-.header-logo .logo-icon {
-  background-color: #0062ff;
-  color: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1rem;
+.header-logo:hover {
+  background-color: #f0f4f8;
+  transform: translateY(-1px);
 }
+
+/* logo icon removed; only text shown */
 
 .header-logo h2 {
   font-size: 1.1rem;
@@ -117,28 +113,46 @@
 .new-analysis-btn {
   background-color: #0062ff;
   color: #ffffff;
-  padding: 8px 16px; /* Padding ajustado para o header */
+  padding: 6px 12px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.9rem; /* Fonte ajustada para o header */
+  border-radius: 3px;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(0, 98, 255, 0.2);
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  gap: 6px;
+  transition: background-color 0.2s ease;
 }
 
 .new-analysis-btn:hover {
   background-color: #004acb;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 98, 255, 0.3);
 }
 
 .new-analysis-btn .icon-plus {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: bold;
+}
+
+/* ========================================================================== */
+/* === BOTÃO DE LOGIN NO HEADER === */
+/* ========================================================================== */
+
+.login-btn {
+  background-color: transparent;
+  color: #0062ff;
+  border: 0.5px solid #0062ff;
+  padding: 5px 12px;
+  border-radius: 2px;
+  font-size: 0.95rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login-btn:hover {
+  background-color: #0062ff;
+  color: #ffffff;
 }
 
 /* Responsividade para o botão no header */
@@ -150,4 +164,24 @@
   .new-analysis-btn .icon-plus {
     margin-right: 0; /* Remove margem extra quando o texto some */
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Login button override when header is shown on the home page (minimal look)  */
+/* -------------------------------------------------------------------------- */
+.home-header .login-btn {
+  background: transparent;
+  color: #0062ff;
+  border: none; /* remove border for a cleaner look */
+  padding: 4px 8px;
+  font-size: 0.85rem; /* slightly smaller, minimal */
+  font-weight: 400;
+  border-radius: 2px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.home-header .login-btn:hover {
+  background: rgba(0,98,255,0.06);
 }

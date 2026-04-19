@@ -41,7 +41,12 @@
 /* Para rotas onde a sidebar não deve aparecer de forma alguma (ex: login) */
 .app-layout.no-sidebar-path .content-area {
   margin-left: 0;
-  margin-top: 0; /* Remove o espaço do header em páginas sem sidebar/header */
+  margin-top: var(--header-height); /* Mantém espaço para o header when header present */
+}
+
+/* Quando ocultamos o header (ex: /login), remova o offset superior */
+.app-layout.no-header .content-area {
+  margin-top: 0;
 }
 
 /* Quando a sidebar está fechada, esconde o sidebar */

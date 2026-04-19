@@ -1,48 +1,57 @@
 /* src/pages/home.css */
 
+:root {
+  --header-height: 60px;
+}
+
 .home-overlay {
   width: 100vw;
-  height: 100vh;
+  min-height: calc(100vh - var(--header-height));
   display: flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%);
+  padding: 40px 20px;
 }
 
 .login-modal {
   background-color: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  box-shadow: 0 12px 18px -6px rgba(0, 0, 0, 0.08), 0 6px 8px -6px rgba(0, 0, 0, 0.03);
   width: 100%;
-  max-width: 450px;
-  animation: slideIn 0.4s ease-out;
+  max-width: 360px; /* reduzido para parecer menos volumoso */
+  animation: slideIn 0.35s ease-out;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .modal-header {
-  padding: 32px 32px 24px 32px;
-  text-align: center;
+  padding: 16px 18px 8px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-header h1 {
-  font-size: 1.75rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: #111827;
+  color: #0f172a;
   margin: 0;
+  line-height: 1.1;
 }
 
 .divider {
-  width: 50px;
-  height: 4px;
+  width: 40px;
+  height: 3px;
   background-color: #0062ff;
   border-radius: 2px;
-  margin: 12px auto 0 auto;
+  margin: 8px 0 0 0;
 }
 
 .modal-body {
-  padding: 0 32px 24px 32px;
+  padding: 32px 16px 12px 16px; /* aumentar espaçamento superior para descer o título */
   display: flex;
   flex-direction: column;
 }
@@ -62,7 +71,7 @@
 }
 
 .form-group {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   text-align: left;
 }
 
@@ -93,10 +102,10 @@
 
 .form-group input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   color: #111827;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
@@ -116,10 +125,10 @@
   width: 100%;
   background-color: #0062ff;
   color: #ffffff;
-  padding: 12px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
@@ -134,7 +143,7 @@
   display: flex;
   align-items: center;
   text-align: center;
-  margin: 24px 0;
+  margin: 16px 0;
 }
 
 .separator-line {
@@ -156,18 +165,25 @@
 
 .modal-footer {
   background-color: #f9fafb;
-  padding: 20px 32px;
-  text-align: center;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* força centralização horizontal */
+  justify-content: center;
   border-top: 1px solid #f0f4f8;
 }
 
+/* Footer text and signup link consolidated to ensure proper centering */
 .modal-footer p {
   margin: 0;
   font-size: 0.9rem;
   color: #374151;
+  text-align: center;
 }
 
 .signup-link {
+  display: inline-block;
+  margin-top: 6px;
   color: #0062ff;
   font-weight: 600;
   text-decoration: none;

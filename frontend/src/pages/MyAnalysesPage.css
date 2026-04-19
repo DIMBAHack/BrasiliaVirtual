@@ -24,6 +24,44 @@
   max-width: 1200px; /* Limita a largura máxima do conteúdo */
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.page-header .page-title {
+  margin: 0;
+}
+
+/* Aumenta visualmente o botão 'Nova Análise' para ficar mais proeminente */
+.page-header .new-analysis-btn {
+  background-color: #0062ff;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500; /* mais leve para visual minimalista */
+  min-width: 130px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.page-header .new-analysis-btn .icon-plus {
+  font-size: 1rem;
+}
+
+.page-header .new-analysis-btn:hover {
+  background-color: #004acb;
+}
+
 .page-title {
   font-size: 1.5rem;
   font-weight: 600;

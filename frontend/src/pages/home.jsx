@@ -30,11 +30,6 @@ function Home() {
   return (
     <div className="home-overlay">
       <div className="login-modal">
-        <header className="modal-header">   
-          <h1>Verificador de IA</h1>
-          <div className="divider"></div>
-        </header>
-        
         <form className="modal-body" onSubmit={handleSubmit}>
           <h3>Bem-vindo!</h3>
           <p>Entre com seus dados para continuar.</p>

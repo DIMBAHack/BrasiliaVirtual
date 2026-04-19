@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import FilterBar from '../components/Analise/FilterBar';
 import TextDisplay from '../components/Analise/TextDisplay';
 import OccurrenceCard from '../components/Analise/OccurrenceCard';
-import AutonomyScore from '../components/Analise/AutonomyScore';
 import './Analysis.css';
 
 function AnalysisPage() {
@@ -136,10 +135,6 @@ function AnalysisPage() {
                   detalhe={occ.detalhe}
                 />
               ))}
-            </div>
-
-            <div className="score-section">
-              <AutonomyScore percent={55} />
             </div>
           </aside>
         </main>
