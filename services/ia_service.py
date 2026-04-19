@@ -48,6 +48,7 @@ class TrechoAnalise:
     texto: str
     classificacao: str       # "ia" | "plagio" | "fake_news" | "autoral"
     confianca: float         # 0.0–1.0
+    perplexidade: float = 0.0
     evidencias: list = field(default_factory=list)
     detalhes: str = ""
 
@@ -114,13 +115,11 @@ class SimuladorRespostasIA:
 
     def coletar_todas(self, prompts: list[str]) -> list[str]:
         respostas = []
-        agentes = [AgentsService.claude_agent, AgentsService.gpt_agent, AgentsService.google_agent]
-        for prompt in prompts:
-            for agente_fn in agentes:
-                r = self._invocar(agente_fn, prompt)
-                if r:
-                    respostas.append(r)
-                time.sleep(0.2)
+        agente_fn = AgentsService.google_agent 
+        for prompt in prompts[:1]: 
+            r = self._invocar(agente_fn, prompt)
+            if r:
+                respostas.append(r)
         return respostas
 
 
@@ -161,7 +160,7 @@ class AnalisadorPerplexidade:
 
     def classificar(self, p: float) -> tuple[str, float]:
         if p < 0:       return "indeterminado", 0.0
-        if p < 40:      return "ia", 0.85
+        if p < 40:      return "prob_alta_ia", 0.85
         if p < 70:      return "baixa_prob_ia", 0.55
         if p < 120:     return "inconclusivo", 0.40
         return "humano", 0.75
@@ -304,7 +303,7 @@ Retorne as 5 dicas numeradas, cada uma em uma linha, sem títulos."""
 # ──────────────────────────────────────────────────
 
 class DMBAnalyzer:
-    THRESHOLD_IA = 0.72
+    THRESHOLD_IA = 0.85
 
     def __init__(self, callback_status=None):
         self.cb = callback_status or (lambda msg: print(f"[DMB] {msg}"))
@@ -337,6 +336,18 @@ class DMBAnalyzer:
 
         for i, trecho in enumerate(chunks):
             self.cb(f"Analisando trecho {i + 1}/{total}...")
+            perplex = self.perplexidade.calcular(trecho) 
+            #add perplexidade resultado analise
+            if perplex > 0:
+                perplexidades.append(perplex)
+            classe_perplex, conf_perplex = self.perplexidade.classificar(perplex)
+            resultado.trechos_ia.append(TrechoAnalise(
+                texto=trecho,
+                classificacao="ia",
+                confianca=round(confianca, 2),
+                perplexidade=round(perplex, 2), 
+                detalhes=f"Perplexidade: {round(perplex, 2)}",
+            ))
 
             # Perplexidade (GPT-2)
             perplex = self.perplexidade.calcular(trecho)
@@ -371,7 +382,8 @@ class DMBAnalyzer:
                 ))
                 continue
 
-            # Fake news
+            if not any(char.isdigit() for char in trecho) and len(trecho) < 200:
+                continue
             is_fake, explicacao = self.fakenews.verificar(trecho, tema)
             if is_fake:
                 resultado.trechos_fake_news.append(TrechoAnalise(
