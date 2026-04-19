@@ -1,13 +1,12 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
-from dotenv import load_dotenv
 import os
-
+from dotenv import load_dotenv
 load_dotenv()
 
 class ConfigDB:
     def __init__(self):
-        self.uri = os.getenv("DB")
+        self.uri = os.getenv('MONGODB_URL')
         self.client = MongoClient(self.uri, server_api=ServerApi('1'))
         
     def fileDB(self):
@@ -18,9 +17,18 @@ class ConfigDB:
         except Exception as e:
             print(e)
         return files
+    
+    def fontesDB(self):
+        fontes = self.client["fontesDB"]
+        try:
+            self.client.admin.comman('ping')
+            print("Pinged your deployment. You successfully connected to MongoDB!")
+        except Exception as e:
+            print(e)
+        return fontes
+    
 
     def userDB(self):
-        user = self.client["UserDB"]
         user = self.client.admin.comman('ping')
         try:
             self.client.admin.comman('ping')
@@ -28,4 +36,3 @@ class ConfigDB:
         except Exception as e:
             print(e)
         return user
-    

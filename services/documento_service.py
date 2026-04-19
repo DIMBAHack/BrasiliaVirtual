@@ -13,7 +13,6 @@ from services.chunk_service import ChunkService
 from services.ia_service import DMBAnalyzer, TrechoAnalise
 from core.database import get_async_db
 
-
 def _trecho_to_dict(t: TrechoAnalise) -> dict:
     return {
         "chunk_number": 0,          # será atualizado no loop
@@ -29,7 +28,7 @@ class DocumentoService:
 
     async def processar(self, file: UploadFile, tema: str) -> dict:
         """Lê, chunka, analisa e salva. Retorna documento_id e resumo."""
-        db = get_async_db()
+        db = await get_async_db()
 
         # 1. Extrair texto
         try:
