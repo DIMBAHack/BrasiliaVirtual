@@ -1,0 +1,77 @@
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #0a192f; /* Azul escuro, tema tech */
+  color: #ccd6f6;
+  text-align: center;
+  font-family: 'SF Mono', 'Fira Code', 'Fira Mono', 'Roboto Mono', monospace;
+  overflow: hidden;
+}
+
+.loading-content {
+  max-width: 600px;
+  padding: 20px;
+}
+
+.scanner-animation {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 40px;
+  border: 4px solid #0062ff;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(0, 98, 255, 0.1);
+}
+
+.scanner-animation::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(0, 98, 255, 0.7) 50%, transparent 100%);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  0% {
+    top: -100%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+.loading-title {
+  font-size: 2.5rem;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.loading-subtitle {
+  font-size: 1.1rem;
+  color: #8892b0;
+  margin-bottom: 40px;
+  font-style: italic;
+}
+
+.loading-steps {
+  font-size: 1rem;
+  color: #a8b2d1;
+  height: 20px; /* Garante que não pule o layout */
+}
+
+.loading-steps p {
+  margin: 0;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

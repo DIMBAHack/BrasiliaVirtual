@@ -34,9 +34,13 @@ function UploadModal({ isOpen, onClose }) {
 
   const handleAnalyse = () => {
     if (file && authorName && documentTitle) {
-      console.log("Analisando arquivo:", file.name, "Autor:", authorName, "Título:", documentTitle);
+      // Em um app real, aqui você faria a chamada para a API com os dados do formulário.
+      // A API retornaria um ID de análise, que seria usado para navegar para a página de resultados.
+      console.log("Iniciando análise:", file.name, "Autor:", authorName, "Título:", documentTitle);
+      
+      // Fecha o modal e navega para a tela de carregamento, passando os dados via state.
       onClose();
-      navigate('/analise');
+      navigate('/analisando', { state: { documentTitle, authorName } });
     }
   };
 

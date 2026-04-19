@@ -27,7 +27,7 @@ function Header({ isSidebarOpen, toggleSidebar }) {
             )}
 
             <div className="header-logo" onClick={() => navigate('/')} role="button" tabIndex="0" aria-label="Ir para a página inicial">
-              <h2>DMD<span>Análise</span></h2>
+              <h2>DMB<span>Análise</span></h2>
             </div>
           </div>
 

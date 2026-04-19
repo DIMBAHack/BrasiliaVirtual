@@ -11,8 +11,8 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Inicia o menu fechado
 
   // Define as rotas onde a Sidebar NÃO deve aparecer (home e login)
-  const hideSidebar = location.pathname === '/' || location.pathname === '/login';
-  const hideHeader = location.pathname === '/login';
+  const hideSidebar = ['/', '/login', '/analisando'].includes(location.pathname);
+  const hideHeader = ['/login', '/analisando'].includes(location.pathname);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(prev => !prev);

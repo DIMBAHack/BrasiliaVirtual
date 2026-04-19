@@ -1,40 +1,40 @@
+/* c:/Users/jkhgg/Desktop/teste2/BrasiliaVirtual/frontend/src/pages/AnalysisCard.css */
+
 .analysis-card {
   background-color: #ffffff;
-  border: 1px solid #e0e6ed;
-  border-radius: 16px;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eef2f7;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  overflow: hidden; /* Para manter o border-radius nos filhos */
+  justify-content: space-between;
+  min-height: 220px; /* Altura mínima para consistência */
 }
 
 .analysis-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 98, 255, 0.1);
-  border-color: #d4e3ff;
+  box-shadow: 0 8px 25px rgba(0, 98, 255, 0.08);
 }
 
 .card-header {
-  padding: 20px;
-  border-bottom: 1px solid #f0f4f8;
+  margin-bottom: 16px;
 }
 
 .card-title {
   font-size: 1.1rem;
   font-weight: 600;
   color: #111827;
-  margin: 0 0 8px 0;
-  /* Trunca títulos longos */
-  white-space: nowrap;
+  margin: 0 0 4px 0;
+  /* Limita o título a 2 linhas para evitar quebra de layout */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.card-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  min-height: 2.4rem; /* Garante espaço para 2 linhas */
 }
 
 .card-date {
@@ -42,74 +42,81 @@
   color: #6b7280;
 }
 
-.card-student {
-  font-size: 0.8rem;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* Ícone de usuário antes do nome */
-.card-student::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  background-color: currentColor; /* Usa a cor do texto pai */
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='currentColor'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E");
-  mask-size: contain;
-}
-
 .card-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
   flex-grow: 1;
 }
 
-.score-bar-container {
-  width: 100%;
+.card-student {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0 0 16px 0;
 }
 
-.score-bar-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
+.findings-section {
+  /* Espaço para os indícios */
+}
+
+.findings-title {
+  font-size: 0.85rem;
+  font-weight: 600;
   color: #374151;
-  margin-bottom: 6px;
-  font-weight: 500;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.score-bar-background {
-  width: 100%;
-  height: 8px;
-  background-color: #e5e7eb;
-  border-radius: 4px;
-  overflow: hidden;
+.findings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.score-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.5s ease-in-out;
+.finding-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.finding-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.finding-text strong {
+  color: #111827;
+}
+
+.no-findings-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
 }
 
 .card-footer {
-  padding: 16px 20px;
-  background-color: #f9fafb;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
   text-align: right;
 }
 
-.card-link {
-  color: #0062ff;
-  font-weight: 600;
+.view-details-link {
   font-size: 0.85rem;
+  font-weight: 600;
+  color: #0062ff;
   text-decoration: none;
-  transition: color 0.2s ease;
 }
 
-.card-link:hover {
-  color: #004acb;
+.analysis-card:hover .view-details-link {
+  text-decoration: underline;
 }
