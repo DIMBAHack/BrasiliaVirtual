@@ -3,20 +3,23 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from core.database import conectar, desconectar, MongoDB
+from core.database import AsyncMongoManager, MongoDB
 from api.rotas_documento import router as doc_router
 from models.user_router import router as user_router
 
 # Importe seu router (o código que você me enviou)
 # from routers.user_router import router as user_router
 
+AsyncMongoManager.conectar()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Conecta Motor (async) e PyMongo (sync)
-    await conectar()
+    AsyncMongoManager.conectar()
     MongoDB.connect()
     yield
-    await desconectar()
+    AsyncMongoManager.desconectar()
     MongoDB.disconnect()
 
 

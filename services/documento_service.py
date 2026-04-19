@@ -11,7 +11,7 @@ from fastapi import UploadFile, HTTPException
 from services.reader_service import ReaderService
 from services.chunk_service import ChunkService
 from services.ia_service import DMBAnalyzer, TrechoAnalise
-from core.database import get_async_db
+from core.database import AsyncMongoManager
 
 def _trecho_to_dict(t: TrechoAnalise) -> dict:
     return {
@@ -28,7 +28,7 @@ class DocumentoService:
 
     async def processar(self, file: UploadFile, tema: str) -> dict:
         """Lê, chunka, analisa e salva. Retorna documento_id e resumo."""
-        db = await get_async_db()
+        db = AsyncMongoManager.get_db()
 
         # 1. Extrair texto
         try:
@@ -130,7 +130,7 @@ class DocumentoService:
             print(f"[ERRO BG {documento_id[:8]}] {e}")
 
     async def buscar(self, documento_id: str) -> dict:
-        db = await get_async_db()
+        db = AsyncMongoManager.get_db()
         try:
             doc = await db["documentos"].find_one({"_id": ObjectId(documento_id)})
         except Exception:

@@ -34,28 +34,39 @@ settings = Settings()
 
 # ── Motor (async) — usado pelo DocumentoService ─────────────────────────────
 
-_async_client: AsyncIOMotorClient = None
-_async_db: AsyncIOMotorDatabase = None
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+# from sua_config import settings
 
+class AsyncMongoManager:
+    # Atributos de classe (compartilhados globalmente)
+    _client: AsyncIOMotorClient | None = None
+    _db: AsyncIOMotorDatabase | None = None
 
-async def conectar():
-    global _async_client, _async_db
-    _async_client = AsyncIOMotorClient(settings.MONGODB_URL)
-    _async_db = _async_client[settings.MONGODB_DB_NAME]
-    print("✅ Motor (async) conectado ao MongoDB")
+    @classmethod
+    def conectar(cls):
+        """Inicializa a conexão estaticamente."""
+        print('oi'+f' {cls._client}')
+        if cls._client is None:
 
+            cls._client = AsyncIOMotorClient(settings.MONGODB_URL)
+            cls._db = cls._client[settings.MONGODB_DB_NAME]
+            print("✅ Motor (async) conectado ao MongoDB (Estático)")
 
-async def desconectar():
-    global _async_client
-    if _async_client:
-        _async_client.close()
-        print("🔌 Motor desconectado")
+    @classmethod
+    async def desconectar(cls):
+        """Encerra a conexão estaticamente."""
+        if cls._client is not None:
+            cls._client.close()
+            cls._client = None
+            cls._db = None
+            print("🔌 Motor desconectado")
 
-
-def get_async_db() -> AsyncIOMotorDatabase:
-    if _async_db is None:
-        raise RuntimeError("Motor não conectado. Verifique o lifespan do FastAPI.")
-    return _async_db
+    @classmethod
+    def get_db(cls) -> AsyncIOMotorDatabase:
+        """Retorna a instância do banco de dados estaticamente."""
+        if cls._db is None:
+            raise RuntimeError("Motor não conectado. Verifique o lifespan do FastAPI.")
+        return cls._db
 
 
 # ── PyMongo (sync) — usado pelo UserRepository ──────────────────────────────
@@ -63,12 +74,9 @@ def get_async_db() -> AsyncIOMotorDatabase:
 class MongoDB:
     _client: MongoClient = None
 
-
-
-
     @classmethod
     def connect(cls):
-        cls._client = MongoClient(+
+        cls._client = MongoClient(
             settings.MONGODB_URL,
 
             tls=True,
