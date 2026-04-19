@@ -130,7 +130,7 @@ class DocumentoService:
             print(f"[ERRO BG {documento_id[:8]}] {e}")
 
     async def buscar(self, documento_id: str) -> dict:
-        db = get_async_db()
+        db = await get_async_db()
         try:
             doc = await db["documentos"].find_one({"_id": ObjectId(documento_id)})
         except Exception:

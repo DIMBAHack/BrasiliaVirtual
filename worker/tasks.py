@@ -1,5 +1,4 @@
-# worker/tasks.py
-
+from core.database import MongoDB
 import logging
 import time
 from celery import shared_task, Task
@@ -48,9 +47,6 @@ def process_chunk(self, doc_id: str, index: int, text: str):
         retry_in = 10 * (2 ** self.request.retries)
         raise self.retry(exc=exc, countdown=retry_in)
 
-    except Exception as exc:
-        raise self.retry(exc=exc)
-
 
 # ════════════════════════════════════════════════════
 # TASK 2 — Finalizar documento (callback do chord)
@@ -68,11 +64,11 @@ def finalize_document(results: list[dict], doc_id: str):
     'results' é a lista de retornos de cada process_chunk.
     """
 
-    db = get_db() # pegar o banco
-    db["documents"].update_one(
+    db = MongoDB.documentos_col() 
+    db.update_one(
         {"_id": ObjectId(doc_id)},
         {"$set": {
-            "status":       "completed",
-            "completed_at": datetime.utcnow(),
+            "status":       "concluido",
+            "concluido_em": datetime.now(),
         }}
     )

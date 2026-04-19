@@ -1,5 +1,5 @@
 from celery import Celery
-from AnaliseIA.core.config import settings
+from core.config import settings
 
 # ──────────────────────────────────────────
 # Instância do Celery

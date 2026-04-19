@@ -1,24 +1,19 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, BeforeValidator
+from typing import Annotated
+
 from typing import Optional
 from datetime import datetime
 from bson import ObjectId
 
 
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
 
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid ObjectId")
-        return ObjectId(v)
+def _validate_object_id(v):
+    if not ObjectId.is_valid(v):
+        raise ValueError("Invalid ObjectId")
+    return ObjectId(v)
 
-    @classmethod
-    def __get_pydantic_json_schema__(cls, schema):
-        schema.update(type="string")
-        return schema
+ 
+PyObjectId = Annotated[ObjectId, BeforeValidator(_validate_object_id)]
 
 
 class UserBase(BaseModel):

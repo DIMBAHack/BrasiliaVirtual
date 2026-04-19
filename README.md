@@ -54,7 +54,6 @@ pip install -r requirements.txt
 
 ### 3. Iniciar servidor
 ```bash
-cd AnaliseIA
 uvicorn main:app --reload --port 8000
 ```
 

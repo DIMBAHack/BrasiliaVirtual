@@ -68,23 +68,18 @@ class MongoDB:
 
     @classmethod
     def connect(cls):
-            cls._client = MongoClient(settings.MONGODB_URL)
-            _async_client = AsyncIOMotorClient(
+        cls._client = MongoClient(+
             settings.MONGODB_URL,
+
             tls=True,
+
             tlsAllowInvalidCertificates=True,
+
         )
 
-# PyMongo (sync)
-        cls._client = MongoClient(
-            settings.MONGODB_URL,
-            tls=True,
-            tlsAllowInvalidCertificates=True,
-        )
-        # testa conexão imediatamente
         cls._client.admin.command("ping")
-        print("✅ PyMongo (sync) conectado ao MongoDB")
 
+        print("✅ PyMongo (sync) conectado ao MongoDB")
     @classmethod
     def disconnect(cls):
         if cls._client:
